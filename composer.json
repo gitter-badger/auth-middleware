@@ -10,12 +10,14 @@
   "require": {
     "php": "^7.4 || ^8.0",
     "psr/http-server-middleware": "^1.0",
-    "psr/log": "^1.0"
+    "psr/log": "^1.0",
+    "psr/http-factory": "^1.0"
   },
   "require-dev": {
     "nette/tester": "^2.3.2",
     "tracy/tracy": "^2.3",
-    "firebase/php-jwt": "^5.0"
+    "firebase/php-jwt": "^5.0",
+    "slim/slim": "^4.5"
   },
   "autoload": {
     "psr-4": {

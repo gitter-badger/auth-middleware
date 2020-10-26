@@ -43,10 +43,10 @@ final class TokenMiddleware implements MiddlewareInterface
     ) {
         $this->decoder = $decoder;
         $this->extractors = $extractors ?? [
-                static::headerExtractor(),
-                static::cookieExtractor(),
+                self::headerExtractor(),
+                self::cookieExtractor(),
             ];
-        $this->writer = $writer ?? static::attributeWriter();
+        $this->writer = $writer ?? self::attributeWriter();
         $this->logger = $logger;
     }
 
