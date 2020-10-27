@@ -109,7 +109,7 @@ final class TokenMiddleware implements MiddlewareInterface
      */
     private function writeToken(?object $token, Request $request): Request
     {
-        return ($this->writer)($token, $request);
+        return ($this->writer)($token, $request, $this->logger);
     }
 
     /**
