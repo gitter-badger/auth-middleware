@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Api\Middleware;
+namespace Dakujem\Middleware;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 

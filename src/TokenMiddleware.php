@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Api\Middleware;
+namespace Dakujem\Middleware;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -85,7 +85,7 @@ final class TokenMiddleware implements MiddlewareInterface
         }
 
         // log if no extractor found the token
-        $this->logger->log(LogLevel::INFO, 'Token not found.');
+        $this->logger && $this->logger->log(LogLevel::INFO, 'Token not found.');
         return null;
     }
 

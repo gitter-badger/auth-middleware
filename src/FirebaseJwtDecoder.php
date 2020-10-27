@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Api\Middleware;
+namespace Dakujem\Middleware;
 
 use Firebase\JWT\JWT;
 use Psr\Log\LoggerInterface;
@@ -51,7 +51,7 @@ final class FirebaseJwtDecoder
                 $this->algos
             );
         } catch (Throwable $throwable) {
-            $logger->log(LogLevel::INFO, $throwable->getMessage(), [$token, $throwable]);
+            $logger && $logger->log(LogLevel::INFO, $throwable->getMessage(), [$token, $throwable]);
         }
         return null;
     }
