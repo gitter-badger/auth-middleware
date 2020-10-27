@@ -1,9 +1,9 @@
-# PSR-15 Authentication Middleware
+# PSR-15 Auth Middleware
 
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/dakujem/auth-middleware)
 [![Build Status](https://travis-ci.org/dakujem/auth-middleware.svg?branch=master)](https://travis-ci.org/dakujem/auth-middleware)
 
-Modern and highly flexible PSR-15 authentication middleware.
+Modern and highly flexible PSR-15 authentication and authorization middleware.
 
 > 💿 `composer require dakujem/auth-middleware`
 
