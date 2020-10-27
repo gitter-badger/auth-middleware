@@ -22,10 +22,10 @@ use Psr\Http\Server\MiddlewareInterface;
  */
 class AuthFactory
 {
-    private ?string $secret;
-    private ?ResponseFactory $rf;
+    protected ?string $secret;
+    protected ?ResponseFactory $rf;
     /** @var callable fn(string):callable */
-    private $decoderProvider;
+    protected $decoderProvider;
 
     public function __construct(?string $secret, ?ResponseFactory $rf, ?callable $defaultDecoderProvider = null)
     {
@@ -75,7 +75,7 @@ class AuthFactory
      * @param callable|null $onError a callable with signature fn(Request,Response):?Response
      * @return PredicateMiddleware
      */
-    public function assertTokens(string $attributeName = 'token', callable $onError = null): MiddlewareInterface
+    public function assertTokens(string $attributeName = 'token', ?callable $onError = null): MiddlewareInterface
     {
         if ($this->rf === null) {
             throw new LogicException('Response factory not provided.');

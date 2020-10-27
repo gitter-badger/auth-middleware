@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware\Support;
 
+use Dakujem\Middleware\PredicateMiddleware;
+use Dakujem\Middleware\TokenMiddleware;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Server\MiddlewareInterface;
 
@@ -19,13 +21,37 @@ final class AuthWizard
         return new AuthFactory($secret, $responseFactory);
     }
 
-    public static function decodeTokens(string $secret): MiddlewareInterface
-    {
-        return static::factory($secret, null)->decodeTokens();
+    /**
+     * @see AuthFactory::decodeTokens()
+     *
+     * @param string $secret API secret key
+     * @param string $attributeName
+     * @param string|null $headerName
+     * @param string|null $cookieName
+     * @return TokenMiddleware
+     */
+    public static function decodeTokens(
+        string $secret,
+        string $attributeName = 'token',
+        ?string $headerName = 'Authorization',
+        ?string $cookieName = 'token'
+    ): MiddlewareInterface {
+        return static::factory($secret, null)->decodeTokens($attributeName, $headerName, $cookieName);
     }
 
-    public static function assertTokens(ResponseFactory $responseFactory): MiddlewareInterface
-    {
-        return static::factory(null, $responseFactory)->assertTokens();
+    /**
+     * @see AuthFactory::assertTokens()
+     *
+     * @param ResponseFactory $responseFactory
+     * @param string $attributeName
+     * @param callable|null $onError
+     * @return PredicateMiddleware
+     */
+    public static function assertTokens(
+        ResponseFactory $responseFactory,
+        string $attributeName = 'token',
+        ?callable $onError = null
+    ): MiddlewareInterface {
+        return static::factory(null, $responseFactory)->assertTokens($attributeName, $onError);
     }
 }
