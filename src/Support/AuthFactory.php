@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware\Support;
 
-use Api\Middleware\FirebaseJwtDecoder;
-use Api\Middleware\PredicateMiddleware;
-use Api\Middleware\TokenCallables;
-use Api\Middleware\TokenMiddleware;
+use Dakujem\Middleware\FirebaseJwtDecoder;
+use Dakujem\Middleware\PredicateMiddleware;
+use Dakujem\Middleware\TokenCallables;
+use Dakujem\Middleware\TokenMiddleware;
 use Firebase\JWT\JWT;
 use LogicException;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
@@ -81,13 +81,13 @@ class AuthFactory
             throw new LogicException('Response factory not provided.');
         }
         // Create a default/basic responder.
-        $responder = PredicateMiddleware::basicErrorResponder($this->rf);
+        $responder = PredicateMiddleware::basicErrorResponder($this->rf, 401); // HTTP status 401 (Unauthorized)
 
         // If $onError was passed, create a convenience user responder.
         if ($onError !== null) {
             $responder = function (Request $request) use ($onError, $responder): Response {
                 $response = $responder($request);
-                // $onError is passed the Request and a fresh 403 Response.
+                // $onError is passed the Request and a fresh 401 Unauthorized Response.
                 $rv = $onError($request, $response);
                 // $onError can optionally return a Response
                 return $rv instanceof Response ? $rv : $response;

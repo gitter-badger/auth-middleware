@@ -32,7 +32,7 @@ The pair of middleware (MW) will look for a [JWT](https://jwt.io/introduction/)
 token in the `Authorization` header or `token` cookie.\
 Then it will decode it and put the decoded token to the `token` request attribute accessible for the application.\
 If the token is not present or is not valid, the execution pipeline will be terminated
-and a `403 Forbidden` response will be returned.
+and a `401 Unauthorized` response will be returned.
 
 > 💡 The MW can be used for OAuth tokens, or other tokens as well, see below.
 
@@ -108,7 +108,7 @@ These are the defaults:
 ```php
 new PredicateMiddleware(
     TokenCallables::attributeTokenProvider('token'),
-    PredicateMiddleware::basicErrorResponder( /* ResponseFactory */ $responseFactory )
+    PredicateMiddleware::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
 );
 ```
 

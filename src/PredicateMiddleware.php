@@ -50,15 +50,18 @@ final class PredicateMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Create a basic error responder that returns a response with 403 status.
+     * Create a basic error responder that returns a response with 400 (Bad Request) status.
      *
      * @param ResponseFactoryInterface $responseFactory
+     * @param int|null $httpStatus HTTP response status, default is 400
      * @return callable
      */
-    public static function basicErrorResponder(ResponseFactoryInterface $responseFactory): callable
-    {
-        return function (/* Request $request */) use ($responseFactory): Response {
-            return $responseFactory->createResponse(403);
+    public static function basicErrorResponder(
+        ResponseFactoryInterface $responseFactory,
+        ?int $httpStatus = null
+    ): callable {
+        return function (/* Request $request */) use ($responseFactory, $httpStatus): Response {
+            return $responseFactory->createResponse($httpStatus ?? 400);
         };
     }
 }
