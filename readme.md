@@ -13,16 +13,14 @@ Modern and flexible PSR-15 authentication middleware.
 
 The following example uses Slim PHP framework.
 ```php
-//SlimWizard::addJwtAuthentication($app, $secret);
+$app->add(AuthWizard::assertTokens($app->getResponseFactory()));
+$app->add(AuthWizard::decodeTokens($secret));
+```
 
-// TODO need a friction reducer 🤷‍♂️
-
-
-$mwFactory = new SlimAuthFactory($secret, $app->getResponseFactory());
-$app->add($mwFactory->auth());
-$app->add($mwFactory->tokens());
-
-$app->group('/foo')->add($mwFactory->auth());
+```php
+$mwFactory = AuthWizard::factory($secret, $app->getResponseFactory());
+$app->add($mwFactory->decodeTokens());
+$app->group('/foo')->add($mwFactory->assertTokens());
 ```
 
 This call is equivalent to the following:

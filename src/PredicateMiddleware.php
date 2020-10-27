@@ -57,7 +57,7 @@ final class PredicateMiddleware implements MiddlewareInterface
      */
     public static function basicErrorResponder(ResponseFactoryInterface $responseFactory): callable
     {
-        return function () use ($responseFactory): Response {
+        return function (/* Request $request */) use ($responseFactory): Response {
             return $responseFactory->createResponse(403);
         };
     }

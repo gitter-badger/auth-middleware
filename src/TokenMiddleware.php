@@ -16,7 +16,7 @@ use Psr\Log\LogLevel;
  *
  * By default, it extracts tokens from `Authorization` header or `token` cookie,
  * then decodes them using the provided decoder,
- * and finally writes the decoded tokens to the `token` header attribute.
+ * and finally writes the decoded tokens to the `token` attribute of the request.
  * All steps are configurable.
  *
  * Uses a set of extractors to extract a token string,
