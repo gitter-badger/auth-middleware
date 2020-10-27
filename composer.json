@@ -1,5 +1,7 @@
 {
   "name": "dakujem/auth-middleware",
+  "description": "Highly flexible PSR-15 auth middleware.",
+  "keywords": ["psr-15", "middleware", "authentication", "authorization"],
   "license": "Unlicense",
   "authors": [
     {
@@ -33,5 +35,10 @@
     "test": "Run application tests. (defaults to local tests)",
     "test:local": "Run application tests with local configuration.",
     "test:ci": "Run application tests, provide configuration options as needed."
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    }
   }
 }
