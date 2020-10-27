@@ -19,7 +19,8 @@ The package consists of two decoupled middleware implementations:
 use Dakujem\Middleware\Support\AuthWizard;
 ```
 
-The following example uses Slim PHP framework, but same applies to any PSR-15 compatible middleware dispatcher.
+The following example uses [Slim PHP](https://www.slimframework.com) framework,
+but same applies to any [PSR-15](https://www.php-fig.org/psr/psr-15/) compatible middleware dispatcher.
 ```php
 /* @var Slim\App $app */
 $app->add(AuthWizard::assertTokens($app->getResponseFactory()));
@@ -27,10 +28,13 @@ $app->add(AuthWizard::decodeTokens('a-secret-api-key-never-to-commit-to-a-repo')
 ```
 > 💡 The above uses a static helper wizard for convenience, but can be fine-tuned for any use case, see below.
 
-The pair of middleware (MW) will look for a JWT token in the `Authorization` header or `token` cookie.\
+The pair of middleware (MW) will look for a [JWT](https://jwt.io/introduction/)
+token in the `Authorization` header or `token` cookie.\
 Then it will decode it and put the decoded token to the `token` request attribute accessible for the application.\
 If the token is not present or is not valid, the execution pipeline will be terminated
 and a `403 Forbidden` response will be returned.
+
+> 💡 The MW can be used for OAuth tokens, or other tokens as well, see below.
 
 The token can be accessed via the request attribute:
 ```php
@@ -45,7 +49,7 @@ $app->add($mwFactory->decodeTokens());                // decode the token for al
 $app->group('/foo')->add($mwFactory->assertTokens()); // only apply the assertion for selected ones
 ```
 
-For the defaults to work, you need to install Firebase JWT package.\
+For the defaults to work, you need to install [Firebase JWT](https://github.com/firebase/php-jwt) package.\
 `composer require firebase/php-jwt:"^5.0"`
 
 > 💡 You are able to use any other implementation, see below.
@@ -83,6 +87,8 @@ new TokenMiddleware(
     TokenMiddleware::attributeWriter('token')
 );
 ```
+The decoder should be swapped if you want to use OAuth tokens of a different JWT implementation.
+
 
 The [`PredicateMiddleware`] is a general purpose middleware that is only responsible for evaluation of a predicate and
 termination of the pipeline execution (by not calling the next layer) in case the predicate fails.\
