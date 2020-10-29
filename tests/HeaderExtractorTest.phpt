@@ -10,11 +10,9 @@ require_once __DIR__ . '/support/ExtractorTestCase.php';
 use Dakujem\Middleware\Manipulators;
 use Dakujem\Middleware\Test\Support\_ExtractorTestCase;
 use LogicException;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Slim\Psr7\Factory\RequestFactory;
 use Tester\Assert;
-use Tester\TestCase;
 
 /**
  * Test of the Manipulators::headerExtractor static factory.
@@ -25,7 +23,7 @@ use Tester\TestCase;
  */
 class _HeaderExtractorTest extends _ExtractorTestCase
 {
-       public function testExtraction()
+    public function testExtraction()
     {
         // a real JWT
         $token = $this->token();
@@ -49,6 +47,22 @@ class _HeaderExtractorTest extends _ExtractorTestCase
         Assert::same(null, $x($invalidHeaderRequest));
         Assert::same($token, $x($aliasRequest));
         Assert::same(null, $x($fooRequest));
+    }
+
+    public function testFormats()
+    {
+        $x = Manipulators::headerExtractor();
+        $default = (new RequestFactory())->createRequest('GET', '/');
+
+        Assert::same('OK', $x($default->withHeader('Authorization', 'Bearer OK')));
+        Assert::same('OK', $x($default->withHeader('Authorization', 'Bearer               OK          '))); // is trimmed
+        Assert::same('ok', $x($default->withHeader('authorization', 'bearer ok'))); // case insensitive
+        Assert::null($x($default->withHeader('Authorization', 'Bearer')));
+        Assert::null($x($default->withHeader('Authorization', 'Bearer ')));
+        Assert::null($x($default->withHeader('Authorization', 'OK')));
+        Assert::null($x($default->withHeader('Authorization', '.')));
+        Assert::same('čučoriedky', $x($default->withHeader('Authorization', 'Bearer čučoriedky')));
+        Assert::same('(ňä§)', $x($default->withHeader('Authorization', 'Bearer (ňä§)')));
     }
 
     public function testLogging()

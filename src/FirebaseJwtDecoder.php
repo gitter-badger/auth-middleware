@@ -38,11 +38,11 @@ final class FirebaseJwtDecoder
      *
      * Does not throw exceptions. Any throwable is intercepted and `null` is returned.
      *
-     * @param string|null $token raw token string
+     * @param string $token raw token string
      * @param LoggerInterface|null $logger
      * @return object|null decoded token payload
      */
-    public function __invoke(?string $token, ?LoggerInterface $logger): ?object
+    public function __invoke(string $token, ?LoggerInterface $logger = null): ?object
     {
         try {
             return JWT::decode(
@@ -51,7 +51,7 @@ final class FirebaseJwtDecoder
                 $this->algos
             );
         } catch (Throwable $throwable) {
-            $logger && $logger->log(LogLevel::INFO, $throwable->getMessage(), [$token, $throwable]);
+            $logger && $logger->log(LogLevel::DEBUG, $throwable->getMessage(), [$token, $throwable]);
         }
         return null;
     }

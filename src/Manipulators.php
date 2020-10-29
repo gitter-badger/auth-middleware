@@ -21,18 +21,21 @@ final class Manipulators
     /**
      * Create an extractor that extracts Bearer tokens from a header.
      *
+     * A valid header must have this format:
+     * `Authorization: Bearer <token>`
+     * Where "Authorization" is a header name, Bearer is a keyword and <token> is a non-whitespace-only string.
+     *
      * @param string $headerName name of the header to extract tokens from
      * @return callable
      */
     public static function headerExtractor(string $headerName = 'Authorization'): callable
     {
         return function (Request $request, ?LoggerInterface $logger = null) use ($headerName): ?string {
-            $headerValues = $request->getHeader($headerName);
-            foreach (array_filter($headerValues) as $header) {
-                $matches = null;
-                if (preg_match('/^Bearer\s+(.*)$/i', $header, $matches)) {
+            foreach ($request->getHeader($headerName) as $headerValue) {
+                $token = static::extractBearerTokenFromHeaderValue($headerValue);
+                if ($token !== null && $token !== '') {
                     $logger && $logger->log(LogLevel::DEBUG, "Using Bearer token from request header '{$headerName}'.");
-                    return $matches[1];
+                    return $token;
                 }
                 $logger && $logger->log(LogLevel::DEBUG, "Bearer token not present in request header '{$headerName}'.");
             }
@@ -49,8 +52,8 @@ final class Manipulators
     public static function cookieExtractor(string $cookieName = 'token'): callable
     {
         return function (Request $request, ?LoggerInterface $logger = null) use ($cookieName): ?string {
-            $token = $request->getCookieParams()[$cookieName] ?? null;
-            if ($token) {
+            $token = trim($request->getCookieParams()[$cookieName] ?? '');
+            if ($token !== '') {
                 $logger && $logger->log(LogLevel::DEBUG, "Using bare token from cookie '{$cookieName}'.");
                 return $token;
             }
@@ -122,5 +125,20 @@ final class Manipulators
                 return ($this->callable)($request);
             }
         } : $callable;
+    }
+
+    /**
+     * Extracts a Bearer token from a header value.
+     *
+     * @param string $headerValue
+     * @return string|null an extracted token string or null if not present or header malformed
+     */
+    public static function extractBearerTokenFromHeaderValue(string $headerValue): ?string
+    {
+        $matches = null;
+        if ($headerValue !== '' && preg_match('/^Bearer\s+(\S+)\s*$/i', $headerValue, $matches)) {
+            return $matches[1];
+        }
+        return null;
     }
 }

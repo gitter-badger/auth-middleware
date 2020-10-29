@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware\Test\Support;
 
+require_once __DIR__ . '/ProxyLogger.php';
+
 use Psr\Log\LoggerInterface;
 use Tester\TestCase;
 
@@ -25,7 +27,6 @@ abstract class _ExtractorTestCase extends TestCase
 
     protected function proxyLogger(callable $fn): LoggerInterface
     {
-        require_once __DIR__ . '/ProxyLogger.php';
         return new _ProxyLogger($fn);
     }
 }

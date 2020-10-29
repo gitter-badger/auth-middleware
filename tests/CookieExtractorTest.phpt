@@ -45,6 +45,23 @@ class _CookieExtractorTest extends _ExtractorTestCase
         Assert::same(null, $x($default));
     }
 
+    public function testFormats()
+    {
+        $x = Manipulators::cookieExtractor();
+        $default = (new RequestFactory())->createRequest('GET', '/');
+
+        Assert::same('OK', $x($default->withCookieParams(['token' => 'OK'])));
+        Assert::same('OK', $x($default->withCookieParams(['token' => '  OK  ']))); // is trimmed
+        Assert::null($x($default->withCookieParams(['token' => ''])));
+        Assert::null($x($default->withCookieParams(['token' => '     '])));
+
+        Assert::notNull($x($default->withCookieParams(['token' => '.'])));
+        Assert::notNull($x($default->withCookieParams(['token' => '++'])));
+
+        // this is a known issue, to prevent it, regular expressions would have to be added
+        Assert::same('NOT OK', $x($default->withCookieParams(['token' => '  NOT OK  '])));
+    }
+
     public function testLogging()
     {
         // create a bunch of test requests

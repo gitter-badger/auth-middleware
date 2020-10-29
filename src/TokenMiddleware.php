@@ -30,7 +30,7 @@ final class TokenMiddleware implements MiddlewareInterface
     /** @var callable */
     private $decoder;
     /** @var callable[] */
-    private array $extractors;
+    private iterable $extractors;
     /** @var callable */
     private $writer;
     private ?LoggerInterface $logger;
@@ -85,7 +85,7 @@ final class TokenMiddleware implements MiddlewareInterface
         }
 
         // log if no extractor found the token
-        $this->logger && $this->logger->log(LogLevel::INFO, 'Token not found.');
+        $this->logger && $this->logger->log(LogLevel::DEBUG, 'Token not found.');
         return null;
     }
 

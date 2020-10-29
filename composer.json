@@ -16,6 +16,7 @@
     "psr/http-factory": "^1.0"
   },
   "require-dev": {
+    "ext-json": "*",
     "nette/tester": "^2.3",
     "tracy/tracy": "^2.3",
     "firebase/php-jwt": "^5.0",
