@@ -6,7 +6,7 @@ namespace Dakujem\Middleware\Support;
 
 use Dakujem\Middleware\FirebaseJwtDecoder;
 use Dakujem\Middleware\PredicateMiddleware;
-use Dakujem\Middleware\TokenCallables;
+use Dakujem\Middleware\Manipulators;
 use Dakujem\Middleware\TokenMiddleware;
 use Firebase\JWT\JWT;
 use LogicException;
@@ -55,13 +55,13 @@ class AuthFactory
             throw new LogicException('Secret not provided.');
         }
         $extractors = [
-            $headerName !== null ? TokenMiddleware::headerExtractor($headerName) : null,
-            $cookieName !== null ? TokenMiddleware::cookieExtractor($cookieName) : null,
+            $headerName !== null ? Manipulators::headerExtractor($headerName) : null,
+            $cookieName !== null ? Manipulators::cookieExtractor($cookieName) : null,
         ];
         return new TokenMiddleware(
             ($this->decoderProvider ?? static::defaultDecoderProvider())($this->secret),
             array_filter($extractors),
-            TokenMiddleware::attributeWriter($attributeName)
+            Manipulators::attributeWriter($attributeName)
         );
     }
 
@@ -81,7 +81,7 @@ class AuthFactory
             throw new LogicException('Response factory not provided.');
         }
         // Create a default/basic responder.
-        $responder = PredicateMiddleware::basicErrorResponder($this->rf, 401); // HTTP status 401 (Unauthorized)
+        $responder = Manipulators::basicErrorResponder($this->rf, 401); // HTTP status 401 (Unauthorized)
 
         // If $onError was passed, create a convenience user responder.
         if ($onError !== null) {
@@ -94,8 +94,8 @@ class AuthFactory
             };
         }
         return new PredicateMiddleware(
-            TokenCallables::attributeTokenProvider($attributeName),
-            $responder
+            Manipulators::attributeTokenProvider($attributeName),
+            Manipulators::callableToHandler($responder)
         );
     }
 

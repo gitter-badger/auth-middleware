@@ -9,8 +9,8 @@ Modern and highly flexible PSR-15 authentication and authorization middleware.
 
 
 The package consists of two decoupled middleware implementations:
-- [`TokenMiddleware`] for token decoding
-- [`PredicateMiddleware`] for token assertion (auth)
+- `TokenMiddleware` for token decoding
+- `PredicateMiddleware` for token assertion (auth)
 
 
 ## Default Usage
@@ -34,7 +34,8 @@ Then it will decode it and put the decoded token to the `token` request attribut
 If the token is not present or is not valid, the execution pipeline will be terminated
 and a `401 Unauthorized` response will be returned.
 
-> 💡 The MW can be used for OAuth tokens, or other tokens as well, see below.
+> 💡 The MW can be used for OAuth tokens, or other tokens as well,
+> simply by swapping the default decoder for another one, see below.
 
 The token can be accessed via the request attribute:
 ```php
@@ -56,6 +57,23 @@ For the defaults to work, you need to install [Firebase JWT](https://github.com/
 
 
 ## Compose your own middleware
+
+In the examples above, we are using the [`AuthWizard`] convenience helper which provides some sensible defaults.\
+However, it is possible and encouraged to build your own middleware using the components provided by the package.
+
+>
+> Note that I'm using aliased class names instead of full interface names in this documentation for brevity.
+>
+> Here are the full interface names:
+> - `Request` --> `Psr\Http\Message\ServerRequestInterface`\
+> - `Response` --> `Psr\Http\Message\ResponseInterface`\
+> - `ResponseFactory` --> `Psr\Http\Message\ResponseFactoryInterface`\
+> - `Handler` --> `Psr\Http\Server\RequestHandlerInterface`\
+> - `Logger` --> `Psr\Log\LoggerInterface`
+>
+
+
+### `TokenMiddleware`
 
 The [`TokenMiddleware`] is responsible for finding and decoding a token,
 then making it available to the rest of the app.
@@ -81,48 +99,54 @@ These are the defaults:
 new TokenMiddleware(
     new FirebaseJwtDecoder('a-secret-never-to-commit', ['HS256', 'HS512', 'HS384']),
     [
-        TokenMiddleware::headerExtractor('Authorization'),
-        TokenMiddleware::cookieExtractor('token'),
+        Manipulators::headerExtractor('Authorization'),
+        Manipulators::cookieExtractor('token'),
     ],
-    TokenMiddleware::attributeWriter('token')
+    Manipulators::attributeWriter('token')
 );
 ```
 The decoder should be swapped if you want to use OAuth tokens of a different JWT implementation.
 
 
+### `PredicateMiddleware`
+
 The [`PredicateMiddleware`] is a general purpose middleware that is only responsible for evaluation of a predicate and
-termination of the pipeline execution (by not calling the next layer) in case the predicate fails.\
+termination of the pipeline execution in case the predicate fails.\
+A pipeline is terminated by calling an error Handler instead of the next pipeline Handler.\
 Here we are using it to assert that a token is indeed available in the Request.
 
 The [`PredicateMiddleware`] is composed of
 - a _predicate_
     - a _predicate_ is a callable that returns truthy if the predicate passes and falsy if not
     - `fn(Request):bool`
-- an _error responder_
-    - a responder is a callable that takes a Request and returns a Response
-    - `fn(Request):Response`
+- an _error handler_
+    - a PSR `Handler` implementation instance
 
 Again, these components can be replaced, extended or customized.
 
 These are the defaults:
 ```php
 new PredicateMiddleware(
-    TokenCallables::attributeTokenProvider('token'),
-    PredicateMiddleware::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
+    Manipulators::attributeTokenProvider('token'),
+    Manipulators::callableToHandler(
+        Manipulators::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
+    )
 );
 ```
 
 You now have the flexibility to fine-tune the pair of MW for any purpose.
 
->
-> Note that I'm using aliased class names instead of full interface names in this documentation for brevity.
->
-> Here are the full interface names:
-> - `Request` --> `Psr\Http\Message\ServerRequestInterface`\
-> - `Response` --> `Psr\Http\Message\ResponseInterface`\
-> - `ResponseFactory` --> `Psr\Http\Message\ResponseFactoryInterface`
-> - `Logger` --> `Psr\Log\LoggerInterface`
->
+
+### `Manipulators`
+
+The [`Manipulators`] static class provides various request/response manipulators that ca be used for token handling.
+
+
+### `FirebaseJwtDecoder`
+
+The [`FirebaseJwtDecoder`] class serves as the default implementation for JWT token decoding.\
+It is used as a _decoder_ for the `TokenMiddleware`.
+
 
 
 ## Testing
@@ -140,4 +164,6 @@ Ideas or contribution is welcome. Please send a PR or file an issue.
 
 [`TokenMiddleware`]: src/TokenMiddleware.php
 [`PredicateMiddleware`]: src/PredicateMiddleware.php
+[`Manipulators`]: src/Manipulators.php
+[`FirebaseJwtDecoder`]: src/FirebaseJwtDecoder.php
 

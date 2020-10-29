@@ -16,10 +16,11 @@
     "psr/http-factory": "^1.0"
   },
   "require-dev": {
-    "nette/tester": "^2.3.2",
+    "nette/tester": "^2.3",
     "tracy/tracy": "^2.3",
     "firebase/php-jwt": "^5.0",
-    "slim/slim": "^4.5"
+    "slim/slim": "^4.5",
+    "slim/psr7": "^1.2"
   },
   "autoload": {
     "psr-4": {

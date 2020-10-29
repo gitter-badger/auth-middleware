@@ -10,7 +10,7 @@ use Psr\Log\LogLevel;
 use Throwable;
 
 /**
- * A decoder that uses Firebase JWT implementation.
+ * A callable decoder that uses Firebase JWT implementation.
  *
  * Note: firebase/php-jwt is a peer dependency, you need to install it separately:
  *   `composer require firebase/php-jwt:"^5.0"`

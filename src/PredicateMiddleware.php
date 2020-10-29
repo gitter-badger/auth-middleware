@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware;
 
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
@@ -12,24 +11,23 @@ use Psr\Http\Server\RequestHandlerInterface as Handler;
 
 /**
  * A general-purpose middleware
- * that will conditionally terminate pipeline execution by calling error responder
+ * that will conditionally terminate pipeline execution by calling error handler
  * on predicate failure.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 final class PredicateMiddleware implements MiddlewareInterface
 {
-    /** @var callable */
+    /** @var callable fn(Request):bool */
     private $predicate;
-    /** @var callable */
-    private $errorResponder;
+    private Handler $errorHandler;
 
     public function __construct(
         callable $predicate,
-        callable $errorResponder
+        Handler $errorHandler
     ) {
         $this->predicate = $predicate;
-        $this->errorResponder = $errorResponder;
+        $this->errorHandler = $errorHandler;
     }
 
     /**
@@ -45,23 +43,7 @@ final class PredicateMiddleware implements MiddlewareInterface
             // if the predicate passes, invoke the next middleware
             return $next->handle($request);
         }
-        // if the predicate fails, invoke the error responder
-        return ($this->errorResponder)($request);
-    }
-
-    /**
-     * Create a basic error responder that returns a response with 400 (Bad Request) status.
-     *
-     * @param ResponseFactoryInterface $responseFactory
-     * @param int|null $httpStatus HTTP response status, default is 400
-     * @return callable
-     */
-    public static function basicErrorResponder(
-        ResponseFactoryInterface $responseFactory,
-        ?int $httpStatus = null
-    ): callable {
-        return function (/* Request $request */) use ($responseFactory, $httpStatus): Response {
-            return $responseFactory->createResponse($httpStatus ?? 400);
-        };
+        // if the predicate fails, invoke the error handler instead
+        return $this->errorHandler->handle($request);
     }
 }

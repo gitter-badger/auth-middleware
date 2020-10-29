@@ -16,9 +16,9 @@ use Psr\Http\Server\MiddlewareInterface;
  */
 final class AuthWizard
 {
-    public static function factory(?string $secret, ?ResponseFactory $responseFactory): AuthFactory
+    public static function factory(?string $secret, ?ResponseFactory $responseFactory, ...$args): AuthFactory
     {
-        return new AuthFactory($secret, $responseFactory);
+        return new AuthFactory($secret, $responseFactory, ...$args);
     }
 
     /**
