@@ -105,7 +105,7 @@ new TokenMiddleware(
     Manipulators::attributeWriter('token')
 );
 ```
-The decoder should be swapped if you want to use OAuth tokens of a different JWT implementation.
+The decoder should be swapped if you want to use OAuth tokens or a different JWT implementation.
 
 
 ### `PredicateMiddleware`
