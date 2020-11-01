@@ -11,8 +11,8 @@ use Psr\Http\Server\RequestHandlerInterface as Handler;
 
 /**
  * A general-purpose middleware
- * that will conditionally terminate pipeline execution by calling error handler
- * on predicate failure.
+ * that will conditionally terminate pipeline execution
+ * by calling error handler on predicate failure.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */

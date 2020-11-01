@@ -13,15 +13,16 @@ use Psr\Log\LogLevel;
 
 /**
  * This middleware detects tokens in the request and decodes them.
+ * Its responsibility is to provide tokens for the application.
  *
- * By default, it extracts tokens from `Authorization` header or `token` cookie,
+ * By default, it extracts raw tokens from `Authorization` header or `token` cookie,
  * then decodes them using the provided decoder,
  * and finally writes the decoded tokens to the `token` attribute of the request.
  * All steps are configurable.
  *
- * Uses a set of extractors to extract a token string,
+ * Uses a set of extractors to extract a raw token string,
  * a decoder to decode it to a token representation
- * and a writer to write the token to a request attribute.
+ * and a writer to inject the token to a request attribute.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
