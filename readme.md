@@ -105,10 +105,10 @@ These are the defaults provided by `AuthWizard::decodeTokens`:
 new TokenMiddleware(
     new FirebaseJwtDecoder('a-secret-never-to-commit', ['HS256', 'HS512', 'HS384']),
     [
-        Manipulators::headerExtractor('Authorization'), // look in the `Authorization` header
-        Manipulators::cookieExtractor('token'),         // look in the `token` cookie
+        TokenManipulators::headerExtractor('Authorization'), // look in the `Authorization` header
+        TokenManipulators::cookieExtractor('token'),         // look in the `token` cookie
     ],
-    Manipulators::attributeWriter('token')              // disclose the decoded token using the `token` attribute
+    TokenManipulators::attributeWriter('token')              // disclose the decoded token using the `token` attribute
 );
 ```
 The decoder should be swapped if you want to use OAuth tokens or a different JWT implementation.
@@ -133,10 +133,10 @@ Again, these components can be replaced, extended or customized.
 These are the defaults provided by `AuthWizard::assertTokens`:
 ```php
 new PredicateMiddleware(
-    Manipulators::attributeTokenProvider('token'), // look for the decoded token in the `token` attribute
-    Manipulators::callableToHandler(
+    TokenManipulators::attributeTokenProvider('token'), // look for the decoded token in the `token` attribute
+    TokenManipulators::callableToHandler(
         // respond with 401 on error by default
-        Manipulators::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
+        TokenManipulators::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
     )
 );
 ```
@@ -144,9 +144,10 @@ new PredicateMiddleware(
 You now have the flexibility to fine-tune the pair of MW for any purpose.
 
 
-### `Manipulators`
+### `TokenManipulators`
 
-The [`Manipulators`] static class provides various request/response manipulators that ca be used for token handling.
+The [`TokenManipulators`] static class provides various request/response manipulators
+that ca be used for token handling.
 
 
 ### `FirebaseJwtDecoder`
@@ -178,7 +179,7 @@ Ideas or contribution is welcome. Please send a PR or file an issue.
 
 [`TokenMiddleware`]:      src/TokenMiddleware.php
 [`PredicateMiddleware`]:  src/PredicateMiddleware.php
-[`Manipulators`]:         src/TokenManipulators.php
+[`TokenManipulators`]:    src/TokenManipulators.php
 [`FirebaseJwtDecoder`]:   src/FirebaseJwtDecoder.php
 [`AuthWizard`]:           src/Support/AuthWizard.php
 [`AuthFactory`]:          src/Support/AuthFactory.php

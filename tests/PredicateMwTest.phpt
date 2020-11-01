@@ -7,7 +7,7 @@ namespace Dakujem\Middleware\Test;
 require_once __DIR__ . '/bootstrap.php';
 
 use Dakujem\Middleware\PredicateMiddleware;
-use Dakujem\Middleware\Manipulators;
+use Dakujem\Middleware\TokenManipulators;
 use LogicException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -30,7 +30,7 @@ class _PredicateMwTest extends TestCase
     {
         $passingPredicate = fn() => true;
         $failingPredicate = fn() => false;
-        $errorResponder = Manipulators::callableToHandler(function () {
+        $errorResponder = TokenManipulators::callableToHandler(function () {
             throw new LogicException('This should never be called.');
         });
         $next = new class implements RequestHandlerInterface {
@@ -60,7 +60,7 @@ class _PredicateMwTest extends TestCase
     {
         $failingPredicate = fn() => false;
         $passingPredicate = fn() => true;
-        $errorResponder = Manipulators::callableToHandler(
+        $errorResponder = TokenManipulators::callableToHandler(
             fn() => (new ResponseFactory)->createResponse(418) // I'm a teapot
         );
         $next = new class implements RequestHandlerInterface {

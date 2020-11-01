@@ -9,7 +9,7 @@ require_once __DIR__ . '/support/ProxyLogger.php';
 
 use ArrayIterator;
 use Dakujem\Middleware\FirebaseJwtDecoder;
-use Dakujem\Middleware\Manipulators;
+use Dakujem\Middleware\TokenManipulators;
 use Dakujem\Middleware\Test\Support\_ProxyLogger;
 use Dakujem\Middleware\TokenMiddleware;
 use Firebase\JWT\JWT;
@@ -111,7 +111,7 @@ class _TokenMwTest extends TestCase
         $mw = new TokenMiddleware(
             $decoder = fn() => null,
             $extractors = new ArrayIterator([]),
-            $writer = Manipulators::attributeWriter(),
+            $writer = TokenManipulators::attributeWriter(),
             $logger = new _ProxyLogger(fn() => null)
         );
         Assert::with($mw, function () use ($decoder, $extractors, $writer, $logger) {

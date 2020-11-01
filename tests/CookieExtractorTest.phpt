@@ -7,7 +7,7 @@ namespace Dakujem\Middleware\Test;
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/support/ExtractorTestCase.php';
 
-use Dakujem\Middleware\Manipulators;
+use Dakujem\Middleware\TokenManipulators;
 use Dakujem\Middleware\Test\Support\_ExtractorTestCase;
 use LogicException;
 use Psr\Log\LogLevel;
@@ -15,9 +15,9 @@ use Slim\Psr7\Factory\RequestFactory;
 use Tester\Assert;
 
 /**
- * Test of the Manipulators::cookieExtractor static factory.
+ * Test of the TokenManipulators::cookieExtractor static factory.
  *
- * @see Manipulators::cookieExtractor()
+ * @see TokenManipulators::cookieExtractor()
  *
  * @author Andrej Rypak (dakujem) <xrypak@gmail.com>
  */
@@ -33,13 +33,13 @@ class _CookieExtractorTest extends _ExtractorTestCase
         $aliasRequest = $default->withCookieParams(['foo' => $token]); // a correct token with different name
 
         // the default extractor checks the `token` cookie
-        $x = Manipulators::cookieExtractor();
+        $x = TokenManipulators::cookieExtractor();
         Assert::same($token, $x($happyRequest));
         Assert::same(null, $x($aliasRequest));
         Assert::same(null, $x($default));
 
         // different cookie name
-        $x = Manipulators::cookieExtractor('foo');
+        $x = TokenManipulators::cookieExtractor('foo');
         Assert::same(null, $x($happyRequest));
         Assert::same($token, $x($aliasRequest));
         Assert::same(null, $x($default));
@@ -47,7 +47,7 @@ class _CookieExtractorTest extends _ExtractorTestCase
 
     public function testFormats()
     {
-        $x = Manipulators::cookieExtractor();
+        $x = TokenManipulators::cookieExtractor();
         $default = (new RequestFactory())->createRequest('GET', '/');
 
         Assert::same('OK', $x($default->withCookieParams(['token' => 'OK'])));
@@ -68,7 +68,7 @@ class _CookieExtractorTest extends _ExtractorTestCase
         $request = (new RequestFactory())->createRequest('GET', '/')->withCookieParams(['token' => $this->token()]);
 
         // should log if the token is found
-        Manipulators::cookieExtractor('token')($request, $this->proxyLogger(function (
+        TokenManipulators::cookieExtractor('token')($request, $this->proxyLogger(function (
             $level,
             $message,
             $context
@@ -79,7 +79,7 @@ class _CookieExtractorTest extends _ExtractorTestCase
         }));
 
         // does not log when no token is found
-        Manipulators::cookieExtractor('sorry')($request, $this->proxyLogger(function () {
+        TokenManipulators::cookieExtractor('sorry')($request, $this->proxyLogger(function () {
             throw new LogicException('This should never be called.');
         }));
     }

@@ -7,7 +7,7 @@ namespace Dakujem\Middleware\Test;
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/support/ExtractorTestCase.php';
 
-use Dakujem\Middleware\Manipulators;
+use Dakujem\Middleware\TokenManipulators;
 use Dakujem\Middleware\Test\Support\_ExtractorTestCase;
 use LogicException;
 use Psr\Log\LogLevel;
@@ -15,9 +15,9 @@ use Slim\Psr7\Factory\RequestFactory;
 use Tester\Assert;
 
 /**
- * Test of the Manipulators::headerExtractor static factory.
+ * Test of the TokenManipulators::headerExtractor static factory.
  *
- * @see Manipulators::headerExtractor()
+ * @see TokenManipulators::headerExtractor()
  *
  * @author Andrej Rypak (dakujem) <xrypak@gmail.com>
  */
@@ -35,14 +35,14 @@ class _HeaderExtractorTest extends _ExtractorTestCase
         $fooRequest = $default->withHeader('foo', 'foo value'); // correct header not set
 
         // the default extractor only checks the `Authorization` header
-        $x = Manipulators::headerExtractor();
+        $x = TokenManipulators::headerExtractor();
         Assert::same($token, $x($happyRequest));
         Assert::same(null, $x($invalidHeaderRequest));
         Assert::same(null, $x($aliasRequest));
         Assert::same(null, $x($fooRequest));
 
         // different header
-        $x = Manipulators::headerExtractor('foo');
+        $x = TokenManipulators::headerExtractor('foo');
         Assert::same(null, $x($happyRequest));
         Assert::same(null, $x($invalidHeaderRequest));
         Assert::same($token, $x($aliasRequest));
@@ -51,7 +51,7 @@ class _HeaderExtractorTest extends _ExtractorTestCase
 
     public function testFormats()
     {
-        $x = Manipulators::headerExtractor();
+        $x = TokenManipulators::headerExtractor();
         $default = (new RequestFactory())->createRequest('GET', '/');
 
         Assert::same('OK', $x($default->withHeader('Authorization', 'Bearer OK')));
@@ -70,7 +70,7 @@ class _HeaderExtractorTest extends _ExtractorTestCase
         // create a bunch of test requests
         $request = (new RequestFactory())->createRequest('GET', '/');
 
-        $x = Manipulators::headerExtractor();
+        $x = TokenManipulators::headerExtractor();
 
         // should log if the token is found
         $x($request->withHeader('Authorization', 'Bearer ' . $this->token()), $this->proxyLogger(function (

@@ -6,16 +6,16 @@ namespace Dakujem\Middleware\Test;
 
 require_once __DIR__ . '/bootstrap.php';
 
-use Dakujem\Middleware\Manipulators;
+use Dakujem\Middleware\TokenManipulators;
 use Slim\Psr7\Factory\RequestFactory;
 use Tester\Assert;
 use Tester\TestCase;
 use TypeError;
 
 /**
- * Test of Manipulators::attributeWriter static factory.
+ * Test of TokenManipulators::attributeWriter static factory.
  *
- * @see Manipulators::attributeWriter()
+ * @see TokenManipulators::attributeWriter()
  *
  * @author Andrej Rypak (dakujem) <xrypak@gmail.com>
  */
@@ -36,14 +36,14 @@ class _AttributeWriterTest extends TestCase
 
         Assert::same(
             $token,
-            (Manipulators::attributeWriter()($token, $request))->getAttribute('token'),
+            (TokenManipulators::attributeWriter()($token, $request))->getAttribute('token'),
             'The token is written to the \'token\' attribute by default.'
         );
-        Assert::same($token, (Manipulators::attributeWriter('foo')($token, $request))->getAttribute('foo'));
-        Assert::same($token, (Manipulators::attributeWriter('')($token, $request))->getAttribute(''));
+        Assert::same($token, (TokenManipulators::attributeWriter('foo')($token, $request))->getAttribute('foo'));
+        Assert::same($token, (TokenManipulators::attributeWriter('')($token, $request))->getAttribute(''));
 
         Assert::throws(function () use ($request) {
-            Manipulators::attributeWriter()(42, $request);
+            TokenManipulators::attributeWriter()(42, $request);
         }, TypeError::class);
     }
 }

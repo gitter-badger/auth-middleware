@@ -16,7 +16,7 @@ use Psr\Log\LogLevel;
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
-final class Manipulators
+final class TokenManipulators
 {
     /**
      * Create an extractor that extracts Bearer tokens from a header.
