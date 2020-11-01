@@ -16,7 +16,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
 
 /**
- * AuthFactory - convenience factory.
+ * AuthFactory - convenience middleware factory.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
@@ -77,6 +77,28 @@ class AuthFactory
      */
     public function assertTokens(string $attributeName = 'token', ?callable $onError = null): MiddlewareInterface
     {
+        return $this->probeTokens(null, $attributeName, $onError);
+    }
+
+    /**
+     * Create a preconfigured instance of PredicateMiddleware.
+     *
+     * The "probe" receives a decoded token (or `null`)
+     * and decides (by returning a boolean value) whether to allow the next middleware
+     * to be executed or the error handler invoked.
+     *
+     * When no "probe" is passed, the error handler is only called if the token is `null`.
+     *
+     * @param callable|null $probe a callable probe with signature fn(?object,Request):bool
+     * @param string $attributeName defaults to `token`
+     * @param callable|null $onError a callable with signature fn(Request,Response):?Response
+     * @return PredicateMiddleware
+     */
+    public function probeTokens(
+        ?callable $probe, // fn(Token):bool
+        string $attributeName = 'token',
+        ?callable $onError = null
+    ): MiddlewareInterface {
         if ($this->rf === null) {
             throw new LogicException('Response factory not provided.');
         }
@@ -93,8 +115,12 @@ class AuthFactory
                 return $rv instanceof Response ? $rv : $response;
             };
         }
+        $provider = TokenManipulators::attributeTokenProvider($attributeName);
+        $predicate = $probe ? function (Request $request) use ($provider, $probe): bool {
+            return $probe($provider($request), $request);
+        } : $provider;
         return new PredicateMiddleware(
-            TokenManipulators::attributeTokenProvider($attributeName),
+            $predicate,
             TokenManipulators::callableToHandler($responder)
         );
     }
