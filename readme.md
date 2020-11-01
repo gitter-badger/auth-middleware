@@ -103,12 +103,16 @@ The default components offer customization too.
 These are the defaults provided by `AuthWizard::decodeTokens`:
 ```php
 new TokenMiddleware(
+    // decode JWT tokens
     new FirebaseJwtDecoder('a-secret-never-to-commit', ['HS256', 'HS512', 'HS384']),
     [
-        TokenManipulators::headerExtractor('Authorization'), // look in the `Authorization` header
-        TokenManipulators::cookieExtractor('token'),         // look in the `token` cookie
+        // look for the tokens in the `Authorization` header
+        TokenManipulators::headerExtractor('Authorization'),
+        // look for the tokens in the `token` cookie
+        TokenManipulators::cookieExtractor('token'),
     ],
-    TokenManipulators::attributeWriter('token')              // disclose the decoded token using the `token` attribute
+    // disclose the decoded token using the `token` attribute
+    TokenManipulators::attributeWriter('token')
 );
 ```
 The decoder should be swapped if you want to use OAuth tokens or a different JWT implementation.
@@ -133,9 +137,10 @@ Again, these components can be replaced, extended or customized.
 These are the defaults provided by `AuthWizard::assertTokens`:
 ```php
 new PredicateMiddleware(
-    TokenManipulators::attributeTokenProvider('token'), // look for the decoded token in the `token` attribute
+    // look for the decoded token in the `token` attribute
+    TokenManipulators::attributeTokenProvider('token'),
+    // respond with 401 on error by default
     TokenManipulators::callableToHandler(
-        // respond with 401 on error by default
         TokenManipulators::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
     )
 );
@@ -172,7 +177,8 @@ Run unit tests using the following command:
 
 ## Contributing
 
-Ideas or contribution is welcome. Please send a PR or file an issue.
+Ideas, feature requests and other contribution is welcome.
+Please send a PR or create an issue.
 
 
 
