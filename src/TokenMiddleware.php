@@ -10,6 +10,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as Handler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Throwable;
 
 /**
  * This middleware detects tokens in the request and decodes them.
@@ -61,12 +62,15 @@ final class TokenMiddleware implements MiddlewareInterface
     public function process(Request $request, Handler $next): Response
     {
         return $next->handle(
-            $this->writeToken(
-                $this->decodeToken(
-                    $this->extractToken($request),
-                ),
-                $request,
-            )
+            $this->trapErrors(function () use ($request) {
+                return
+                    $this->writeToken(
+                        $this->decodeToken(
+                            $this->extractToken($request),
+                        ),
+                        $request,
+                    );
+            }, $request)
         );
     }
 
@@ -111,5 +115,15 @@ final class TokenMiddleware implements MiddlewareInterface
     private function writeToken(?object $token, Request $request): Request
     {
         return ($this->writer)($token, $request, $this->logger);
+    }
+
+    private function trapErrors(callable $code, Request $request): Request
+    {
+        try {
+            return $code();
+        } catch (Throwable $e) {
+            return ($this->trap)($e);
+        }
+        return $request;
     }
 }
