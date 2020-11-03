@@ -103,7 +103,7 @@ final class TokenManipulators
     }
 
     /**
-     * Create a provider that provides decoded tokens from a request attribute of choice.
+     * Create a provider that returns decoded tokens from a request attribute of choice.
      *
      * @param string $attributeName
      * @return callable

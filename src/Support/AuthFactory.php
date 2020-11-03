@@ -41,14 +41,14 @@ class AuthFactory
      * then decodes them using Firebase JWT decoder,
      * and finally writes the decoded tokens to the `token` attribute of the request.
      *
-     * @param string $attributeName the decoded token will appear in this attribute; defaults to `token`
+     * @param string $targetAttributeName the decoded token will appear in this attribute; defaults to `token`
      * @param string|null $headerName a header to look for a Bearer token
      * @param string|null $cookieName a cookie to look for a token
      * @param string|null $errorAttributeName an error message will appear here; defaults to `token.error`
      * @return TokenMiddleware
      */
     public function decodeTokens(
-        string $attributeName = 'token',
+        string $targetAttributeName = 'token',
         ?string $headerName = 'Authorization',
         ?string $cookieName = 'token',
         ?string $errorAttributeName = null
@@ -63,7 +63,10 @@ class AuthFactory
         return new TokenMiddleware(
             ($this->decoderProvider ?? static::defaultDecoderProvider())($this->secret),
             array_filter($extractors),
-            TokenManipulators::attributeInjector($attributeName, $errorAttributeName ?? ($attributeName . '.error'))
+            TokenManipulators::attributeInjector(
+                $targetAttributeName,
+                $errorAttributeName ?? ($targetAttributeName . '.error')
+            )
         );
     }
 
