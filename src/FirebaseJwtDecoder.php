@@ -7,7 +7,7 @@ namespace Dakujem\Middleware;
 use Firebase\JWT\JWT;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Throwable;
+use UnexpectedValueException;
 
 /**
  * A callable decoder that uses Firebase JWT implementation.
@@ -36,13 +36,12 @@ final class FirebaseJwtDecoder
      * Decodes a raw token.
      * Respects these 3 registered claims: `exp` (expiration), `nbf`/`iat` (not before).
      *
-     * Does not throw exceptions. Any throwable is intercepted and `null` is returned.
-     *
      * @param string $token raw token string
      * @param LoggerInterface|null $logger
      * @return object|null decoded token payload
+     * @throws UnexpectedValueException
      */
-    public function __invoke(string $token, ?LoggerInterface $logger = null): ?object
+    public function __invoke(string $token, ?LoggerInterface $logger = null): object
     {
         try {
             return JWT::decode(
@@ -50,9 +49,9 @@ final class FirebaseJwtDecoder
                 $this->secret,
                 $this->algos
             );
-        } catch (Throwable $throwable) {
+        } catch (UnexpectedValueException $throwable) {
             $logger && $logger->log(LogLevel::DEBUG, $throwable->getMessage(), [$token, $throwable]);
+            throw $throwable;
         }
-        return null;
     }
 }

@@ -44,12 +44,14 @@ class AuthFactory
      * @param string $attributeName the decoded token will appear in this attribute; defaults to `token`
      * @param string|null $headerName a header to look for a Bearer token
      * @param string|null $cookieName a cookie to look for a token
+     * @param string|null $errorAttributeName an error message will appear here; defaults to `token.error`
      * @return TokenMiddleware
      */
     public function decodeTokens(
         string $attributeName = 'token',
         ?string $headerName = 'Authorization',
-        ?string $cookieName = 'token'
+        ?string $cookieName = 'token',
+        ?string $errorAttributeName = null
     ): MiddlewareInterface {
         if ($this->secret === null) {
             throw new LogicException('Secret not provided.');
@@ -61,7 +63,7 @@ class AuthFactory
         return new TokenMiddleware(
             ($this->decoderProvider ?? static::defaultDecoderProvider())($this->secret),
             array_filter($extractors),
-            TokenManipulators::attributeWriter($attributeName)
+            TokenManipulators::attributeInjector($attributeName, $errorAttributeName ?? ($attributeName . '.error'))
         );
     }
 

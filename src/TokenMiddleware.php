@@ -10,20 +10,20 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as Handler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Throwable;
 
 /**
  * This middleware detects tokens in the request and decodes them.
  * Its responsibility is to provide tokens for the application.
  *
  * By default, it extracts raw tokens from `Authorization` header or `token` cookie,
- * then decodes them using the provided decoder,
- * and finally writes the decoded tokens to the `token` attribute of the request.
+ * then decodes them as JWT (JSON Web Token) using the provided decoder,
+ * and finally writes the decoded tokens to the `token` attribute of the request,
+ * or writes an error message to `token.error` attribute in case the decoding fails.
  * All steps are configurable.
  *
  * Uses a set of extractors to extract a raw token string,
  * a decoder to decode it to a token representation
- * and a writer to inject the token to a request attribute.
+ * and an injector to inject the token (or error message) to a request attribute.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
@@ -34,13 +34,13 @@ final class TokenMiddleware implements MiddlewareInterface
     /** @var callable[] */
     private iterable $extractors;
     /** @var callable */
-    private $writer;
+    private $injector;
     private ?LoggerInterface $logger;
 
     public function __construct(
         callable $decoder,
         ?iterable $extractors = null,
-        ?callable $writer = null,
+        ?callable $injector = null,
         ?LoggerInterface $logger = null
     ) {
         $this->decoder = $decoder;
@@ -48,7 +48,7 @@ final class TokenMiddleware implements MiddlewareInterface
                 TokenManipulators::headerExtractor(),
                 TokenManipulators::cookieExtractor(),
             ];
-        $this->writer = $writer ?? TokenManipulators::attributeWriter();
+        $this->injector = $injector ?? TokenManipulators::attributeInjector();
         $this->logger = $logger;
     }
 
@@ -62,15 +62,10 @@ final class TokenMiddleware implements MiddlewareInterface
     public function process(Request $request, Handler $next): Response
     {
         return $next->handle(
-            $this->trapErrors(function () use ($request) {
-                return
-                    $this->writeToken(
-                        $this->decodeToken(
-                            $this->extractToken($request),
-                        ),
-                        $request,
-                    );
-            }, $request)
+            $this->injectRequest(
+                $request,
+                fn(): ?object => $this->decodeToken($this->extractToken($request))
+            )
         );
     }
 
@@ -97,6 +92,8 @@ final class TokenMiddleware implements MiddlewareInterface
     /**
      * Decode string token to its payload (claims).
      *
+     * If the decoder throws on error, the injector should catch the exceptions.
+     *
      * @param string|null $token
      * @return object|null payload
      */
@@ -106,24 +103,15 @@ final class TokenMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Process the decoded token.
+     * Perform the decoding transaction.
+     * The token provider callable contains logic that either returns a decoded token, `null` or throws.
      *
-     * @param object|null $token
      * @param Request $request
+     * @param callable $tokenProvider
      * @return Request
      */
-    private function writeToken(?object $token, Request $request): Request
+    private function injectRequest(Request $request, callable $tokenProvider): Request
     {
-        return ($this->writer)($token, $request, $this->logger);
-    }
-
-    private function trapErrors(callable $code, Request $request): Request
-    {
-        try {
-            return $code();
-        } catch (Throwable $e) {
-            return ($this->trap)($e);
-        }
-        return $request;
+        return ($this->injector)($tokenProvider, $request, $this->logger);
     }
 }

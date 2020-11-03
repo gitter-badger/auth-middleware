@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as Handler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Throwable;
 
 /**
  * A helper class providing callables for token manipulation.
@@ -70,6 +71,33 @@ final class TokenManipulators
     public static function attributeWriter(string $attributeName = 'token'): callable
     {
         return function (?object $token, Request $request) use ($attributeName): Request {
+            return $request->withAttribute($attributeName, $token);
+        };
+    }
+
+    /**
+     * Create a writer that writes tokens to a request attribute of choice.
+     *
+     * @param string $attributeName name of the attribute to write tokens to
+     * @param string $errorAttributeName name of the attribute to write error messages to
+     * @return callable
+     */
+    public static function attributeInjector(
+        string $attributeName = 'token',
+        string $errorAttributeName = 'token.error'
+    ): callable {
+        return function (
+            callable $provider,
+            Request $request
+        ) use ($attributeName, $errorAttributeName): Request {
+            try {
+                // Invoke the extraction and decoding process.
+                $token = $provider();
+            } catch (Throwable $throwable) {
+                // Write error messages.
+                return $request->withAttribute($errorAttributeName, 'Token error: ' . $throwable->getMessage());
+            }
+            // Inject the token to the attribute.
             return $request->withAttribute($attributeName, $token);
         };
     }
