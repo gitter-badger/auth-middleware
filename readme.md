@@ -20,7 +20,7 @@ Use `AuthWizard` for convenience:
 ```php
 /* @var Slim\App $app */
 $app->add(AuthWizard::assertTokens($app->getResponseFactory()));
-$app->add(AuthWizard::decodeTokens('a-secret-api-key-never-to-commit-to-a-repo'));
+$app->add(AuthWizard::decodeTokens('a-secret-api-key-never-to-commit'));
 ```
 For highly flexible options to instantiate the middleware, read the next chapter.
 
@@ -39,7 +39,7 @@ $decodedToken = $request->getAttribute('token');
 
 The assertion can be applied to selected routes instead of every route:
 ```php
-$mwFactory = AuthWizard::factory($secret, $app->getResponseFactory());
+$mwFactory = AuthWizard::factory('a-secret-api-key-never-to-commit', $app->getResponseFactory());
 $app->add($mwFactory->decodeTokens());                // decode the token for all routes, but
 $app->group('/foo')->add($mwFactory->assertTokens()); // only apply the assertion for selected ones
 ```
@@ -89,14 +89,13 @@ The [`TokenMiddleware`] is composed of
     - executed in sequence until one returns a string
     - `fn(Request,Logger):?string`
 - a _decoder_
-    - a decoder takes the raw token and decodes it
+    - the decoder takes the raw token and decodes it
     - must only return a valid token object or `null`
     - `fn(string,Logger):?object`
-- a _writer_
-    - a writer takes a decoded token and injects it into the Request
-    - receives `null` when no token has been found or an error has occurred
-    - can do any other operation with the token or Request
-    - `fn(?object,Request,Logger):Request`
+- an _injector_
+    - the injector is responsible for decorating the Request with the decoded token or error messages
+    - obtains the decoded token by running the callable passed to its first argument, which is `fn():?object`
+    - `fn(callable,Request,Logger):Request`
 
 Any of these callable components can be replaced or extended.\
 The default components offer customization too.
@@ -112,11 +111,12 @@ new TokenMiddleware(
         // look for the tokens in the `token` cookie
         TokenManipulators::cookieExtractor('token'),
     ],
-    // disclose the decoded token using the `token` attribute
-    TokenManipulators::attributeWriter('token')
+    // target the `token` and `token.error` attributes for writing the decoded token or error message
+    TokenManipulators::attributeInjector('token', 'token.error')
 );
 ```
 The decoder should be swapped if you want to use OAuth tokens or a different JWT implementation.
+Exceptions may be caught and processed by the injector.
 
 
 ### `PredicateMiddleware`
@@ -164,9 +164,18 @@ It is used as a _decoder_ for the `TokenMiddleware`.
 
 ### `AuthWizard`, `AuthFactory`
 
-[`AuthWizard`] is a friction reducer that helps quickly instantiate the middleware with sensible defaults.
-
+[`AuthWizard`] is a friction reducer that helps quickly instantiate the middleware with sensible defaults.\
 [`AuthFactory`] is a configurable factory provided for convenience. `AuthWizard` internally instantiates it.
+
+Use `AuthFactory::decodeTokens` to create token-decoding middleware.\
+Use `AuthFactory::assertTokens` to assert that a decoded token is present.\
+Use `AuthFactory::probeTokens` to run custom authorization against the token.
+
+```php
+AuthWizard::factory(null, $responseFactory)->probeTokens(function(/*MyToken*/ $token): bool {
+    return $token->sub === 'admin';
+});
+```
 
 
 ## Testing

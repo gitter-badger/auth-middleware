@@ -66,19 +66,6 @@ final class TokenManipulators
      * Create a writer that writes tokens to a request attribute of choice.
      *
      * @param string $attributeName name of the attribute to write tokens to
-     * @return callable
-     */
-    public static function attributeWriter(string $attributeName = 'token'): callable
-    {
-        return function (?object $token, Request $request) use ($attributeName): Request {
-            return $request->withAttribute($attributeName, $token);
-        };
-    }
-
-    /**
-     * Create a writer that writes tokens to a request attribute of choice.
-     *
-     * @param string $attributeName name of the attribute to write tokens to
      * @param string $errorAttributeName name of the attribute to write error messages to
      * @return callable
      */

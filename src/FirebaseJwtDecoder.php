@@ -18,6 +18,11 @@ use UnexpectedValueException;
  * Usage with TokenMiddleware:
  *   $mw = new TokenMiddleware(new FirebaseJwtDecoder('my-secret-is-not-committed-to-the-repo'));
  *
+ * Warning:
+ *   This decoder _only_ ensures that the token has been signed by the given secret key
+ *   and that it is not expired (`exp` claim) or used before intended (`nbf` and `iat` claims).
+ *   The rest of the authorization process is entirely up to your app's logic.
+ *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 final class FirebaseJwtDecoder

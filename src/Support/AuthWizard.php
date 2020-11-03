@@ -28,15 +28,22 @@ final class AuthWizard
      * @param string $attributeName
      * @param string|null $headerName
      * @param string|null $cookieName
+     * @param string|null $errorAttributeName
      * @return TokenMiddleware
      */
     public static function decodeTokens(
         string $secret,
         string $attributeName = 'token',
         ?string $headerName = 'Authorization',
-        ?string $cookieName = 'token'
+        ?string $cookieName = 'token',
+        ?string $errorAttributeName = null
     ): MiddlewareInterface {
-        return static::factory($secret, null)->decodeTokens($attributeName, $headerName, $cookieName);
+        return static::factory($secret, null)->decodeTokens(
+            $attributeName,
+            $headerName,
+            $cookieName,
+            $errorAttributeName
+        );
     }
 
     /**
