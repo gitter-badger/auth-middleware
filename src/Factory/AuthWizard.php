@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dakujem\Middleware\Support;
+namespace Dakujem\Middleware\Factory;
 
 use Dakujem\Middleware\PredicateMiddleware;
 use Dakujem\Middleware\TokenMiddleware;

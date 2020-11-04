@@ -100,7 +100,7 @@ The [`TokenMiddleware`] is composed of
 Any of these callable components can be replaced or extended.\
 The default components offer customization too.
 
-These are the defaults provided by `AuthWizard::decodeTokens`:
+Here are the defaults provided by `AuthWizard::decodeTokens`:
 ```php
 new TokenMiddleware(
     // decode JWT tokens
@@ -135,7 +135,7 @@ The [`PredicateMiddleware`] is composed of
 
 Again, these components can be replaced, extended or customized.
 
-These are the defaults provided by `AuthWizard::assertTokens`:
+Here are the defaults provided by `AuthWizard::assertTokens`:
 ```php
 new PredicateMiddleware(
     // look for the decoded token in the `token` attribute
@@ -153,7 +153,8 @@ You now have the flexibility to fine-tune the pair of MW for any purpose.
 ### `TokenManipulators`
 
 The [`TokenManipulators`] static class provides various request/response manipulators
-that ca be used for token handling.
+that can be used for token handling.\
+They are used as components of the middleware.
 
 
 ### `FirebaseJwtDecoder`
@@ -197,6 +198,6 @@ Please send a PR or create an issue.
 [`PredicateMiddleware`]:  src/PredicateMiddleware.php
 [`TokenManipulators`]:    src/TokenManipulators.php
 [`FirebaseJwtDecoder`]:   src/FirebaseJwtDecoder.php
-[`AuthWizard`]:           src/Support/AuthWizard.php
-[`AuthFactory`]:          src/Support/AuthFactory.php
+[`AuthWizard`]:           src/Factory/AuthWizard.php
+[`AuthFactory`]:          src/Factory/AuthFactory.php
 
