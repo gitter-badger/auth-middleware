@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware;
 
+use DomainException;
 use Firebase\JWT\JWT;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use UnexpectedValueException;
@@ -33,6 +35,9 @@ final class FirebaseJwtDecoder
 
     public function __construct(string $secret, ?array $algos = null)
     {
+        if ($secret === '') {
+            throw new InvalidArgumentException('The secret key may not be empty.');
+        }
         $this->secret = $secret;
         $this->algos = $algos ?? ['HS256', 'HS512', 'HS384'];
     }
@@ -57,6 +62,14 @@ final class FirebaseJwtDecoder
         } catch (UnexpectedValueException $throwable) {
             $logger && $logger->log(LogLevel::DEBUG, $throwable->getMessage(), [$token, $throwable]);
             throw $throwable;
+        } catch (DomainException $throwable) {
+            $re = new UnexpectedValueException(
+                'The JWT is malformed, invalid JSON.',
+                $throwable->getCode(),
+                $throwable
+            );
+            $logger && $logger->log(LogLevel::DEBUG, $re->getMessage(), [$token, $throwable]);
+            throw $re;
         }
     }
 }

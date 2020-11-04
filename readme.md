@@ -192,6 +192,12 @@ Ideas, feature requests and other contribution is welcome.
 Please send a PR or create an issue.
 
 
+### Security Issues
+
+If you happen to find a security problem,
+create an issue without disclosing any relevant details,
+we'll get in touch and discuss the details privately.
+
 
 
 [`TokenMiddleware`]:      src/TokenMiddleware.php

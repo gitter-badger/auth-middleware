@@ -9,6 +9,7 @@ require_once __DIR__ . '/support/ProxyLogger.php';
 
 use Dakujem\Middleware\FirebaseJwtDecoder;
 use Dakujem\Middleware\Test\Support\_ProxyLogger;
+use InvalidArgumentException;
 use LogicException;
 use Psr\Log\LogLevel;
 use Tester\Assert;
@@ -42,43 +43,75 @@ class _FirebaseJwtDecoderTest extends TestCase
 
     public function testMalformedToken()
     {
-        Assert::null((new FirebaseJwtDecoder($this->key))('foobar'));
-        Assert::null((new FirebaseJwtDecoder($this->key))('foo.bar.qux'));
-        Assert::null((new FirebaseJwtDecoder($this->key))(''));
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key))('foobar'),
+            UnexpectedValueException::class
+        );
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key))('foo.bar.qux'),
+            UnexpectedValueException::class
+        );
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key))(''),
+            UnexpectedValueException::class
+        );
     }
 
     public function testMalformedSignature()
     {
         [$header, $payload, $signature] = $this->tokenParts();
         $token = implode('.', [$header, $payload, $signature . 'FOO']);
-        Assert::null((new FirebaseJwtDecoder($this->key))($token));
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key))($token),
+            UnexpectedValueException::class
+        );
     }
 
     public function testMalformedPayload()
     {
         [$header, $payload, $signature] = $this->tokenParts();
         $token = implode('.', [$header, $payload . 'FOO', $signature]);
-        Assert::null((new FirebaseJwtDecoder($this->key))($token));
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key))($token),
+            UnexpectedValueException::class
+        );
     }
 
     public function testMalformedHeader()
     {
         [$header, $payload, $signature] = $this->tokenParts();
         $token = implode('.', [$header . 'FOO', $payload, $signature]);
-        Assert::null((new FirebaseJwtDecoder($this->key))($token));
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key))($token),
+            UnexpectedValueException::class
+        );
     }
 
     public function testInvalidKey()
     {
+        Assert::throws(
+            fn() => new FirebaseJwtDecoder(''),
+            InvalidArgumentException::class
+        );
+
         $token = implode('.', $this->tokenParts());
-        Assert::null((new FirebaseJwtDecoder('foobar!'))($token));
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder('foobar!'))($token),
+            UnexpectedValueException::class
+        );
     }
 
     public function testInvalidAlgo()
     {
         $token = implode('.', $this->tokenParts());
-        Assert::null((new FirebaseJwtDecoder($this->key, ['ritpalova']))($token));
-        Assert::null((new FirebaseJwtDecoder($this->key, ['HS512', 'HS384']))($token));
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key, ['ritpalova']))($token),
+            UnexpectedValueException::class
+        );
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder($this->key, ['HS512', 'HS384']))($token),
+            UnexpectedValueException::class
+        );
     }
 
     /**
@@ -93,9 +126,18 @@ class _FirebaseJwtDecoderTest extends TestCase
         $nbfInFuture = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MiIsIm5iZiI6MjU1MDY3OTY5MX0.hIn7FSLbzrJDUBxs1yp7hik3WvuzLj34oMnD7_yOVzE';
 
         $decoder = (new FirebaseJwtDecoder($this->key));
-        Assert::null($decoder($expInPast));
-        Assert::null($decoder($iatInFuture));
-        Assert::null($decoder($nbfInFuture));
+        Assert::throws(
+            fn() => $decoder($expInPast),
+            UnexpectedValueException::class
+        );
+        Assert::throws(
+            fn() => $decoder($iatInFuture),
+            UnexpectedValueException::class
+        );
+        Assert::throws(
+            fn() => $decoder($nbfInFuture),
+            UnexpectedValueException::class
+        );
     }
 
     public function testLogsOnFailure()
@@ -110,8 +152,8 @@ class _FirebaseJwtDecoderTest extends TestCase
         );
 
         // log on error
-        Assert::null(
-            (new FirebaseJwtDecoder('invalid'))('bad token', new _ProxyLogger(function (
+        Assert::throws(
+            fn() => (new FirebaseJwtDecoder('invalid'))('bad token', new _ProxyLogger(function (
                 $level,
                 $message,
                 $context
@@ -120,7 +162,8 @@ class _FirebaseJwtDecoderTest extends TestCase
                 Assert::true($message !== '');
                 Assert::same('bad token', $context[0] ?? null);
                 Assert::type(UnexpectedValueException::class, $context[1] ?? null);
-            }))
+            })),
+            UnexpectedValueException::class
         );
     }
 

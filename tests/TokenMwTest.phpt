@@ -9,13 +9,14 @@ require_once __DIR__ . '/support/ProxyLogger.php';
 
 use ArrayIterator;
 use Dakujem\Middleware\FirebaseJwtDecoder;
-use Dakujem\Middleware\TokenManipulators;
 use Dakujem\Middleware\Test\Support\_ProxyLogger;
+use Dakujem\Middleware\TokenManipulators;
 use Dakujem\Middleware\TokenMiddleware;
 use Firebase\JWT\JWT;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LogLevel;
 use Slim\Psr7\Factory\RequestFactory;
 use Slim\Psr7\Factory\ResponseFactory;
 use Tester\Assert;
@@ -86,10 +87,22 @@ class _TokenMwTest extends TestCase
             }
         };
 
-        $mw = new TokenMiddleware(new FirebaseJwtDecoder($this->key));
+        $logged = false;
+        $mw = new TokenMiddleware(
+            new FirebaseJwtDecoder($this->key),
+            null,
+            null,
+            new _ProxyLogger(function ($level, $msg, $ctx) use (&$logged) {
+                $logged = true;
+                Assert::same(LogLevel::DEBUG, $level);
+                Assert::same('Token not found.', $msg);
+                Assert::same([], $ctx);
+            })
+        );
 
         $response = $mw->process($default, $next);
         Assert::same(418, $response->getStatusCode());
+        Assert::true($logged, 'The logger has not been called.');
     }
 
     /** @noinspection PhpUndefinedFieldInspection */
@@ -100,7 +113,7 @@ class _TokenMwTest extends TestCase
             // test private methods
             Assert::same($decoder, $this->decoder);
             Assert::count(2, $this->extractors);
-            Assert::notNull($this->writer);
+            Assert::notNull($this->injector);
             Assert::null($this->logger);
         });
     }
@@ -111,14 +124,14 @@ class _TokenMwTest extends TestCase
         $mw = new TokenMiddleware(
             $decoder = fn() => null,
             $extractors = new ArrayIterator([]),
-            $writer = TokenManipulators::attributeWriter(),
+            $injector = TokenManipulators::attributeInjector(),
             $logger = new _ProxyLogger(fn() => null)
         );
-        Assert::with($mw, function () use ($decoder, $extractors, $writer, $logger) {
+        Assert::with($mw, function () use ($decoder, $extractors, $injector, $logger) {
             // test private methods
             Assert::same($decoder, $this->decoder);
             Assert::same($extractors, $this->extractors);
-            Assert::same($writer, $this->writer);
+            Assert::same($injector, $this->injector);
             Assert::same($logger, $this->logger);
         });
     }
