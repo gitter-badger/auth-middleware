@@ -2,6 +2,7 @@
 
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/dakujem/auth-middleware)
 [![Build Status](https://travis-ci.org/dakujem/auth-middleware.svg?branch=main)](https://travis-ci.org/dakujem/auth-middleware)
+[![Coverage Status](https://coveralls.io/repos/github/dakujem/auth-middleware/badge.svg?branch=main)](https://coveralls.io/github/dakujem/auth-middleware?branch=main)
 
 Modern and highly flexible PSR-15 authentication and authorization middleware.
 
