@@ -159,7 +159,7 @@ new PredicateMiddleware(
 );
 ```
 
-You now have the flexibility to fine-tune the pair of MW for any purpose.
+You now have the flexibility to fine-tune the pair of MW for any use case.
 
 
 ### `TokenManipulators`

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Dakujem\Middleware\Factory;
 
 use Dakujem\Middleware\PredicateMiddleware;
+use Dakujem\Middleware\TokenManipulators as Man;
 use Dakujem\Middleware\TokenMiddleware;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Log\LoggerInterface as Logger;
 
 /**
  * AuthWizard - friction reducer / convenience helper.
@@ -29,20 +31,23 @@ final class AuthWizard
      * @param string|null $headerName
      * @param string|null $cookieName
      * @param string|null $errorAttributeName
+     * @param Logger|null $logger
      * @return TokenMiddleware
      */
     public static function decodeTokens(
         string $secret,
         ?string $attributeName = null,
-        ?string $headerName = null,
-        ?string $cookieName = null,
-        ?string $errorAttributeName = null
+        ?string $headerName =  Man::HEADER_NAME,
+        ?string $cookieName = Man::COOKIE_NAME,
+        ?string $errorAttributeName = null,
+        ?Logger $logger = null
     ): MiddlewareInterface {
         return static::factory($secret, null)->decodeTokens(
             $attributeName,
             $headerName,
             $cookieName,
-            $errorAttributeName
+            $errorAttributeName,
+            $logger
         );
     }
 

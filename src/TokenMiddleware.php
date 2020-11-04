@@ -78,15 +78,17 @@ final class TokenMiddleware implements MiddlewareInterface
      */
     private function extractToken(Request $request): ?string
     {
+        $i = 0;
         foreach ($this->extractors as $extractor) {
             $token = $extractor($request, $this->logger);
             if (is_string($token) && $token !== '') {
                 return $token;
             }
+            $i += 1;
         }
 
         // log if no extractor found the token
-        $this->logger && $this->logger->log(LogLevel::DEBUG, 'Token not found.');
+        $this->logger && $this->logger->log(LogLevel::DEBUG, $i > 0 ? 'Token not found.' : 'No extractors.');
         return null;
     }
 

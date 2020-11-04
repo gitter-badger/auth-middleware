@@ -15,6 +15,7 @@ use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Log\LoggerInterface as Logger;
 
 /**
  * AuthFactory - convenience middleware factory.
@@ -46,13 +47,15 @@ class AuthFactory
      * @param string|null $headerName a header to look for a Bearer token; header detection not used when `null`
      * @param string|null $cookieName a cookie to look for a token; cookie detection not used when `null`
      * @param string|null $errorAttributeName an error message will appear here; defaults to `token.error`
+     * @param Logger|null $logger
      * @return TokenMiddleware
      */
     public function decodeTokens(
         ?string $targetAttributeName = null,
-        ?string $headerName = null,
-        ?string $cookieName = null,
-        ?string $errorAttributeName = null
+        ?string $headerName = Man::HEADER_NAME,
+        ?string $cookieName = Man::COOKIE_NAME,
+        ?string $errorAttributeName = null,
+        ?Logger $logger = null
     ): MiddlewareInterface {
         if ($this->secret === null) {
             throw new LogicException('Secret not provided.');
@@ -60,15 +63,16 @@ class AuthFactory
         return new TokenMiddleware(
             ($this->decoderProvider ?? static::defaultDecoderProvider())($this->secret),
             (function () use ($headerName, $cookieName): Generator {
-                $headerName !== null && yield Man::headerExtractor($headerName ?? Man::HEADER_NAME);
-                $cookieName !== null && yield Man::cookieExtractor($cookieName ?? Man::COOKIE_NAME);
+                $headerName !== null && yield Man::headerExtractor($headerName);
+                $cookieName !== null && yield Man::cookieExtractor($cookieName);
             })(),
             Man::attributeInjector(
                 $targetAttributeName ?? Man::TOKEN_ATTRIBUTE_NAME,
                 $errorAttributeName ?? (
                     ($targetAttributeName ?? Man::TOKEN_ATTRIBUTE_NAME) . Man::ERROR_ATTRIBUTE_SUFFIX
                 )
-            )
+            ),
+            $logger
         );
     }
 

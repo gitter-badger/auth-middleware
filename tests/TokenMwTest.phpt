@@ -245,10 +245,18 @@ class _TokenMwTest extends TestCase
     public function testNoExtractorsFindNothing()
     {
         $request = $this->req();
+        $logged = false;
         $check = Assert::with(
             new TokenMiddleware(
                 fn() => null,
-                []
+                [],
+                null,
+                new _ProxyLogger(function ($level, $msg, $ctx) use (&$logged) {
+                    Assert::same(LogLevel::DEBUG, $level);
+                    Assert::same('No extractors.', $msg);
+                    Assert::same([], $ctx);
+                    $logged = true;
+                })
             ),
             function () use ($request) {
                 /** @noinspection PhpUndefinedMethodInspection */
@@ -258,6 +266,7 @@ class _TokenMwTest extends TestCase
             }
         );
         Assert::null($check);
+        Assert::true($logged);
     }
 
     public function testLogWhenNoTokenFound()
@@ -266,7 +275,7 @@ class _TokenMwTest extends TestCase
         Assert::with(
             new TokenMiddleware(
                 fn() => null,
-                [],
+                [fn() => null],
                 null,
                 new _ProxyLogger(function ($level, $msg, $ctx) use (&$logged) {
                     Assert::same(LogLevel::DEBUG, $level);
