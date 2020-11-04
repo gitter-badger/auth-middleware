@@ -25,7 +25,7 @@ final class AuthWizard
      * @see AuthFactory::decodeTokens()
      *
      * @param string $secret API secret key
-     * @param string $attributeName
+     * @param string|null $attributeName
      * @param string|null $headerName
      * @param string|null $cookieName
      * @param string|null $errorAttributeName
@@ -33,9 +33,9 @@ final class AuthWizard
      */
     public static function decodeTokens(
         string $secret,
-        string $attributeName = 'token',
-        ?string $headerName = 'Authorization',
-        ?string $cookieName = 'token',
+        ?string $attributeName = null,
+        ?string $headerName = null,
+        ?string $cookieName = null,
         ?string $errorAttributeName = null
     ): MiddlewareInterface {
         return static::factory($secret, null)->decodeTokens(
@@ -50,15 +50,33 @@ final class AuthWizard
      * @see AuthFactory::assertTokens()
      *
      * @param ResponseFactory $responseFactory
-     * @param string $attributeName
+     * @param string|null $attributeName
      * @param callable|null $onError
      * @return PredicateMiddleware
      */
     public static function assertTokens(
         ResponseFactory $responseFactory,
-        string $attributeName = 'token',
+        ?string $attributeName = null,
         ?callable $onError = null
     ): MiddlewareInterface {
         return static::factory(null, $responseFactory)->assertTokens($attributeName, $onError);
+    }
+
+    /**
+     * @see AuthFactory::probeTokens()
+     *
+     * @param ResponseFactory $responseFactory
+     * @param callable $probe fn(?object,Request):bool
+     * @param string|null $attributeName
+     * @param callable|null $onError
+     * @return PredicateMiddleware
+     */
+    public static function probeTokens(
+        ResponseFactory $responseFactory,
+        callable $probe, // fn(Token):bool
+        ?string $attributeName = null,
+        ?callable $onError = null
+    ): MiddlewareInterface {
+        return static::factory(null, $responseFactory)->probeTokens($probe, $attributeName, $onError);
     }
 }

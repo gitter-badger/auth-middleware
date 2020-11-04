@@ -56,7 +56,7 @@ class _PredicateMwTest extends TestCase
         }, LogicException::class, 'This should never be called.');
     }
 
-    public function testErrorResponderIsCalledOnPredicateFail()
+    public function testErrorHandlerIsCalledOnPredicateFail()
     {
         $failingPredicate = fn() => false;
         $passingPredicate = fn() => true;

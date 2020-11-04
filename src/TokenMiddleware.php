@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware;
 
+use Generator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,7 +24,7 @@ use Psr\Log\LogLevel;
  *
  * Uses a set of extractors to extract a raw token string,
  * a decoder to decode it to a token representation
- * and an injector to inject the token (or error message) to a request attribute.
+ * and an injector to write the token (or error message) to a request attribute.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
@@ -44,10 +45,10 @@ final class TokenMiddleware implements MiddlewareInterface
         ?LoggerInterface $logger = null
     ) {
         $this->decoder = $decoder;
-        $this->extractors = $extractors ?? [
-                TokenManipulators::headerExtractor(),
-                TokenManipulators::cookieExtractor(),
-            ];
+        $this->extractors = $extractors ?? (function (): Generator {
+                yield TokenManipulators::headerExtractor();
+                yield TokenManipulators::cookieExtractor();
+            })();
         $this->injector = $injector ?? TokenManipulators::attributeInjector();
         $this->logger = $logger;
     }

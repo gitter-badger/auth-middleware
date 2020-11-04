@@ -68,6 +68,7 @@ class _TokenMwTest extends TestCase
 
         $mw = new TokenMiddleware(new FirebaseJwtDecoder($this->key));
 
+        /** @noinspection PhpParamsInspection */
         $response = $mw->process($default->withHeader('Authorization', 'Bearer ' . $this->validToken()), $next);
         Assert::same(418, $response->getStatusCode());
 
@@ -100,6 +101,7 @@ class _TokenMwTest extends TestCase
             })
         );
 
+        /** @noinspection PhpParamsInspection */
         $response = $mw->process($default, $next);
         Assert::same(418, $response->getStatusCode());
         Assert::true($logged, 'The logger has not been called.');
@@ -112,7 +114,7 @@ class _TokenMwTest extends TestCase
         Assert::with($mw, function () use ($decoder) {
             // test private methods
             Assert::same($decoder, $this->decoder);
-            Assert::count(2, $this->extractors);
+            Assert::count(2, iterator_to_array($this->extractors));
             Assert::notNull($this->injector);
             Assert::null($this->logger);
         });

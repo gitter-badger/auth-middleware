@@ -6,9 +6,10 @@ namespace Dakujem\Middleware\Factory;
 
 use Dakujem\Middleware\FirebaseJwtDecoder;
 use Dakujem\Middleware\PredicateMiddleware;
-use Dakujem\Middleware\TokenManipulators;
+use Dakujem\Middleware\TokenManipulators as Man;
 use Dakujem\Middleware\TokenMiddleware;
 use Firebase\JWT\JWT;
+use Generator;
 use LogicException;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -41,31 +42,32 @@ class AuthFactory
      * then decodes them using Firebase JWT decoder,
      * and finally writes the decoded tokens to the `token` attribute of the request.
      *
-     * @param string $targetAttributeName the decoded token will appear in this attribute; defaults to `token`
-     * @param string|null $headerName a header to look for a Bearer token
-     * @param string|null $cookieName a cookie to look for a token
+     * @param string|null $targetAttributeName the decoded token will appear in this attribute; defaults to `token`
+     * @param string|null $headerName a header to look for a Bearer token; header detection not used when `null`
+     * @param string|null $cookieName a cookie to look for a token; cookie detection not used when `null`
      * @param string|null $errorAttributeName an error message will appear here; defaults to `token.error`
      * @return TokenMiddleware
      */
     public function decodeTokens(
-        string $targetAttributeName = 'token',
-        ?string $headerName = 'Authorization',
-        ?string $cookieName = 'token',
+        ?string $targetAttributeName = null,
+        ?string $headerName = null,
+        ?string $cookieName = null,
         ?string $errorAttributeName = null
     ): MiddlewareInterface {
         if ($this->secret === null) {
             throw new LogicException('Secret not provided.');
         }
-        $extractors = [
-            $headerName !== null ? TokenManipulators::headerExtractor($headerName) : null,
-            $cookieName !== null ? TokenManipulators::cookieExtractor($cookieName) : null,
-        ];
         return new TokenMiddleware(
             ($this->decoderProvider ?? static::defaultDecoderProvider())($this->secret),
-            array_filter($extractors),
-            TokenManipulators::attributeInjector(
-                $targetAttributeName,
-                $errorAttributeName ?? ($targetAttributeName . '.error')
+            (function () use ($headerName, $cookieName): Generator {
+                $headerName !== null && yield Man::headerExtractor($headerName ?? Man::HEADER_NAME);
+                $cookieName !== null && yield Man::cookieExtractor($cookieName ?? Man::COOKIE_NAME);
+            })(),
+            Man::attributeInjector(
+                $targetAttributeName ?? Man::TOKEN_ATTRIBUTE_NAME,
+                $errorAttributeName ?? (
+                    ($targetAttributeName ?? Man::TOKEN_ATTRIBUTE_NAME) . Man::ERROR_ATTRIBUTE_SUFFIX
+                )
             )
         );
     }
@@ -76,12 +78,14 @@ class AuthFactory
      * The MW will check a Request attribute for presence of a decoded token,
      * and call $onError(Request,Response) handler, if no token is not present.
      *
-     * @param string $attributeName defaults to `token`
+     * @param string|null $attributeName defaults to `token`
      * @param callable|null $onError a callable with signature fn(Request,Response):?Response
      * @return PredicateMiddleware
      */
-    public function assertTokens(string $attributeName = 'token', ?callable $onError = null): MiddlewareInterface
-    {
+    public function assertTokens(
+        ?string $attributeName = null,
+        ?callable $onError = null
+    ): MiddlewareInterface {
         return $this->probeTokens(null, $attributeName, $onError);
     }
 
@@ -95,20 +99,20 @@ class AuthFactory
      * When no "probe" is passed, the error handler is only called if the token is `null`.
      *
      * @param callable|null $probe a callable probe with signature fn(?object,Request):bool
-     * @param string $attributeName defaults to `token`
+     * @param string|null $attributeName defaults to `token`
      * @param callable|null $onError a callable with signature fn(Request,Response):?Response
      * @return PredicateMiddleware
      */
     public function probeTokens(
         ?callable $probe, // fn(Token):bool
-        string $attributeName = 'token',
+        ?string $attributeName = null,
         ?callable $onError = null
     ): MiddlewareInterface {
         if ($this->rf === null) {
             throw new LogicException('Response factory not provided.');
         }
         // Create a default/basic responder.
-        $responder = TokenManipulators::basicErrorResponder($this->rf, 401); // HTTP status 401 (Unauthorized)
+        $responder = Man::basicErrorResponder($this->rf, 401); // HTTP status 401 (Unauthorized)
 
         // If $onError was passed, create a convenience user responder.
         if ($onError !== null) {
@@ -120,13 +124,13 @@ class AuthFactory
                 return $rv instanceof Response ? $rv : $response;
             };
         }
-        $provider = TokenManipulators::attributeTokenProvider($attributeName);
+        $provider = Man::attributeTokenProvider($attributeName ?? Man::TOKEN_ATTRIBUTE_NAME);
         $predicate = $probe ? function (Request $request) use ($provider, $probe): bool {
             return $probe($provider($request), $request);
         } : $provider;
         return new PredicateMiddleware(
             $predicate,
-            TokenManipulators::callableToHandler($responder)
+            Man::callableToHandler($responder)
         );
     }
 

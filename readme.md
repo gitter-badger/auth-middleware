@@ -40,9 +40,21 @@ $decodedToken = $request->getAttribute('token');
 The assertion can be applied to selected routes instead of every route:
 ```php
 $mwFactory = AuthWizard::factory('a-secret-api-key-never-to-commit', $app->getResponseFactory());
-$app->add($mwFactory->decodeTokens());                // decode the token for all routes, but
-$app->group('/foo')->add($mwFactory->assertTokens()); // only apply the assertion for selected ones
+$app->add($mwFactory->decodeTokens());                     // decode the token for all routes, but
+$app->group('/foo', ...)->add($mwFactory->assertTokens()); // only apply the assertion for selected ones
 ```
+
+Custom token assertion can be applied too:
+```php
+$app->group('/admin', ...)->add(AuthWizard::probeTokens(
+    $app->getResponseFactory(),
+    fn(MyToken $token): bool => $token->grantsAdminAccess()
+));
+```
+
+> To cast the token to a specific class as seen above,
+> custom _decoder_ must be used for `TokenMiddleware`, see the next chapter.
+
 
 For the defaults to work (the decoder in particular),
 you need to install [Firebase JWT](https://github.com/firebase/php-jwt) package.\

@@ -19,6 +19,12 @@ use RuntimeException;
  */
 final class TokenManipulators
 {
+    public const TOKEN_ATTRIBUTE_NAME = 'token';
+    public const HEADER_NAME = 'Authorization';
+    public const COOKIE_NAME = 'token';
+    public const ERROR_ATTRIBUTE_NAME = self::TOKEN_ATTRIBUTE_NAME . self::ERROR_ATTRIBUTE_SUFFIX;
+    public const ERROR_ATTRIBUTE_SUFFIX = '.error';
+
     /**
      * Create an extractor that extracts Bearer tokens from a header.
      *
@@ -29,7 +35,7 @@ final class TokenManipulators
      * @param string $headerName name of the header to extract tokens from
      * @return callable
      */
-    public static function headerExtractor(string $headerName = 'Authorization'): callable
+    public static function headerExtractor(string $headerName = self::HEADER_NAME): callable
     {
         return function (Request $request, ?LoggerInterface $logger = null) use ($headerName): ?string {
             foreach ($request->getHeader($headerName) as $headerValue) {
@@ -50,7 +56,7 @@ final class TokenManipulators
      * @param string $cookieName name of the cookie to extract tokens from
      * @return callable
      */
-    public static function cookieExtractor(string $cookieName = 'token'): callable
+    public static function cookieExtractor(string $cookieName = self::COOKIE_NAME): callable
     {
         return function (Request $request, ?LoggerInterface $logger = null) use ($cookieName): ?string {
             $token = trim($request->getCookieParams()[$cookieName] ?? '');
@@ -73,8 +79,8 @@ final class TokenManipulators
      * @return callable
      */
     public static function attributeInjector(
-        string $attributeName = 'token',
-        string $errorAttributeName = 'token.error'
+        string $attributeName = self::TOKEN_ATTRIBUTE_NAME,
+        string $errorAttributeName = self::ERROR_ATTRIBUTE_NAME
     ): callable {
         return function (
             callable $provider,
@@ -98,7 +104,7 @@ final class TokenManipulators
      * @param string $attributeName
      * @return callable
      */
-    public static function attributeTokenProvider(string $attributeName = 'token'): callable
+    public static function attributeTokenProvider(string $attributeName = self::TOKEN_ATTRIBUTE_NAME): callable
     {
         return function (Request $request) use ($attributeName): ?object {
             return $request->getAttribute($attributeName);
