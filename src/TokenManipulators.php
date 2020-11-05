@@ -7,6 +7,7 @@ namespace Dakujem\Middleware;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\MiddlewareInterface as Middleware;
 use Psr\Http\Server\RequestHandlerInterface as Handler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -157,24 +158,24 @@ final class TokenManipulators
      * Turn any callable with signature `fn(Request):Response` into a PSR `RequestHandlerInterface` implementation.
      * If the callable is a handler already, it is returned directly.
      *
-     * @param callable $callable
+     * @param callable $callable fn(Request):Response
      * @return Handler
      */
     public static function callableToHandler(callable $callable): Handler
     {
-        return !$callable instanceof Handler ? new class($callable) implements Handler {
-            private $callable;
+        return !$callable instanceof Handler ? new GenericHandler($callable) : $callable;
+    }
 
-            public function __construct(callable $callable)
-            {
-                $this->callable = $callable;
-            }
-
-            public function handle(Request $request): Response
-            {
-                return ($this->callable)($request);
-            }
-        } : $callable;
+    /**
+     * Turn any callable with signature `fn(Request,Handler):Response` into a PSR `MiddlewareInterface` implementation.
+     * If the callable is a middleware already, it is returned directly.
+     *
+     * @param callable $callable fn(Request,Handler):Response
+     * @return Middleware
+     */
+    public static function callableToMiddleware(callable $callable): Middleware
+    {
+        return !$callable instanceof Middleware ? new GenericMiddleware($callable) : $callable;
     }
 
     /**

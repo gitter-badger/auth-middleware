@@ -39,9 +39,6 @@ final class PredicateMiddleware implements MiddlewareInterface
      */
     public function process(Request $request, Handler $next): Response
     {
-        return ($this->predicate)($request, $next, $this->errorHandler);
-
-
         if (($this->predicate)($request)) {
             // if the predicate passes, invoke the next middleware
             return $next->handle($request);
