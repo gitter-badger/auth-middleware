@@ -26,6 +26,10 @@ use Psr\Log\LogLevel;
  * a decoder to decode it to a token representation
  * and an injector to write the token (or error message) to a request attribute.
  *
+ * Caveat ⚠:
+ *   When using a Generator as the set of extractors,
+ *   each instance of this middleware can only reliably process one Request.
+ *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 final class TokenMiddleware implements MiddlewareInterface
@@ -45,6 +49,7 @@ final class TokenMiddleware implements MiddlewareInterface
         ?LoggerInterface $logger = null
     ) {
         $this->decoder = $decoder;
+        // ⚠ Maybe scrap the idea of a Generator as default iterable for extractors?
         $this->extractors = $extractors ?? (function (): Generator {
                 yield TokenManipulators::headerExtractor();
                 yield TokenManipulators::cookieExtractor();

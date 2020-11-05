@@ -102,6 +102,8 @@ class AuthFactory
      *
      * When no "probe" is passed, the error handler is only called if the token is `null`.
      *
+     * The $onError can be fed a callable to postprocess the Response in case of an error.
+     *
      * @param callable|null $probe a callable probe with signature fn(?object,Request):bool
      * @param string|null $attributeName defaults to `token`
      * @param callable|null $onError a callable with signature fn(Request,Response):?Response
