@@ -18,6 +18,14 @@ use Psr\Log\LoggerInterface as Logger;
  */
 final class AuthWizard
 {
+    /**
+     * Create an instance of AuthFactory.
+     *
+     * @param string|null $secret
+     * @param ResponseFactory|null $responseFactory
+     * @param mixed ...$args
+     * @return AuthFactory
+     */
     public static function factory(?string $secret, ?ResponseFactory $responseFactory, ...$args): AuthFactory
     {
         return new AuthFactory($secret, $responseFactory, ...$args);
@@ -27,26 +35,26 @@ final class AuthWizard
      * @see AuthFactory::decodeTokens()
      *
      * @param string $secret API secret key
-     * @param string|null $attributeName
+     * @param string|null $tokenAttribute
      * @param string|null $headerName
      * @param string|null $cookieName
-     * @param string|null $errorAttributeName
+     * @param string|null $errorAttribute
      * @param Logger|null $logger
      * @return TokenMiddleware
      */
     public static function decodeTokens(
         string $secret,
-        ?string $attributeName = null,
-        ?string $headerName =  Man::HEADER_NAME,
+        ?string $tokenAttribute = null,
+        ?string $headerName = Man::HEADER_NAME,
         ?string $cookieName = Man::COOKIE_NAME,
-        ?string $errorAttributeName = null,
+        ?string $errorAttribute = null,
         ?Logger $logger = null
     ): MiddlewareInterface {
         return static::factory($secret, null)->decodeTokens(
-            $attributeName,
+            $tokenAttribute,
             $headerName,
             $cookieName,
-            $errorAttributeName,
+            $errorAttribute,
             $logger
         );
     }
@@ -55,33 +63,33 @@ final class AuthWizard
      * @see AuthFactory::assertTokens()
      *
      * @param ResponseFactory $responseFactory
-     * @param string|null $attributeName
-     * @param callable|null $onError
+     * @param string|null $tokenAttribute
+     * @param string|null $errorAttribute
      * @return PredicateMiddleware
      */
     public static function assertTokens(
         ResponseFactory $responseFactory,
-        ?string $attributeName = null,
-        ?callable $onError = null
+        ?string $tokenAttribute = null,
+        ?string $errorAttribute = null
     ): MiddlewareInterface {
-        return static::factory(null, $responseFactory)->assertTokens($attributeName, $onError);
+        return static::factory(null, $responseFactory)->assertTokens($tokenAttribute, $errorAttribute);
     }
 
     /**
-     * @see AuthFactory::probeTokens()
+     * @see AuthFactory::inspectTokens()
      *
      * @param ResponseFactory $responseFactory
-     * @param callable $probe fn(?object,Request):bool
-     * @param string|null $attributeName
-     * @param callable|null $onError
+     * @param callable $inspector // fn(Token,callable,callable):Response
+     * @param string|null $tokenAttribute
+     * @param string|null $errorAttribute
      * @return PredicateMiddleware
      */
     public static function probeTokens(
         ResponseFactory $responseFactory,
-        callable $probe, // fn(Token):bool
-        ?string $attributeName = null,
-        ?callable $onError = null
+        callable $inspector, // fn(Token):bool
+        ?string $tokenAttribute = null,
+        ?string $errorAttribute = null
     ): MiddlewareInterface {
-        return static::factory(null, $responseFactory)->probeTokens($probe, $attributeName, $onError);
+        return static::factory(null, $responseFactory)->inspectTokens($inspector, $tokenAttribute, $errorAttribute);
     }
 }

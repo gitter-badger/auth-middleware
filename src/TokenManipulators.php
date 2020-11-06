@@ -27,7 +27,7 @@ final class TokenManipulators
     public const ERROR_ATTRIBUTE_SUFFIX = '.error';
 
     /**
-     * Create an extractor that extracts Bearer tokens from a header.
+     * Create an extractor that extracts Bearer tokens from a header of choice.
      *
      * A valid header must have this format:
      * `Authorization: Bearer <token>`
@@ -52,7 +52,7 @@ final class TokenManipulators
     }
 
     /**
-     * Create an extractor that extracts tokens from a cookie.
+     * Create an extractor that extracts tokens from a cookie of choice.
      *
      * @param string $cookieName name of the cookie to extract tokens from
      * @return callable
@@ -66,6 +66,19 @@ final class TokenManipulators
                 return $token;
             }
             return null;
+        };
+    }
+
+    /**
+     * Create an extractor that extracts tokens from a request attribute of choice.
+     *
+     * @param string $attributeName
+     * @return callable
+     */
+    public static function attributeExtractor(string $attributeName = self::TOKEN_ATTRIBUTE_NAME): callable
+    {
+        return function (Request $request) use ($attributeName): ?string {
+            return $request->getAttribute($attributeName);
         };
     }
 
@@ -100,7 +113,7 @@ final class TokenManipulators
     }
 
     /**
-     * Create a provider that returns decoded tokens from a request attribute of choice.
+     * Create a provider that returns _decoded tokens_ from a request attribute of choice.
      *
      * @param string $attributeName
      * @return callable
@@ -152,6 +165,26 @@ final class TokenManipulators
             ]));
             return $response->withHeader('Content-type', 'application/json');
         };
+    }
+
+    /**
+     * Write error message or error data as JSON to the Response.
+     * Also sets the Content-type header for JSON.
+     *
+     * Warning: Opinionated.
+     *
+     * @param Response $response
+     * @param mixed $error a message or data to be written as error
+     * @return Response
+     */
+    public static function writeJsonError(Response $response, $error): Response
+    {
+        $stream = $response->getBody();
+        /** @noinspection PhpComposerExtensionStubsInspection */
+        $stream !== null && $stream->write(json_encode([
+            'error' => is_string($error) ? ['message' => $error] : $error,
+        ]));
+        return $response->withHeader('Content-type', 'application/json');
     }
 
     /**

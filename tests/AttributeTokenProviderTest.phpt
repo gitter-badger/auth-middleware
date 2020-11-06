@@ -15,7 +15,7 @@ use TypeError;
 /**
  * Test of TokenManipulators::attributeTokenProvider static factory.
  *
- * @see TokenManipulators::attributeTokenProvider()
+ * @see TokenManipulators::attributeExtractor()
  *
  * @author Andrej Rypak (dakujem) <xrypak@gmail.com>
  */
@@ -36,16 +36,16 @@ class _AttributeTokenProviderTest extends TestCase
             ->withAttribute('array', ['type error'])
             ->withAttribute('foo', $token);
 
-        Assert::same($token, TokenManipulators::attributeTokenProvider()($request), 'Fetch `token` attribute by default.');
-        Assert::same($token, TokenManipulators::attributeTokenProvider('token')($request));
-        Assert::same($token, TokenManipulators::attributeTokenProvider('foo')($request));
-        Assert::same($token, TokenManipulators::attributeTokenProvider('')($request)); // an empty string should still be valid
+        Assert::same($token, TokenManipulators::attributeExtractor()($request), 'Fetch `token` attribute by default.');
+        Assert::same($token, TokenManipulators::attributeExtractor('token')($request));
+        Assert::same($token, TokenManipulators::attributeExtractor('foo')($request));
+        Assert::same($token, TokenManipulators::attributeExtractor('')($request)); // an empty string should still be valid
 
         Assert::throws(function () use ($request) {
-            TokenManipulators::attributeTokenProvider('string')($request);
+            TokenManipulators::attributeExtractor('string')($request);
         }, TypeError::class);
         Assert::throws(function () use ($request) {
-            TokenManipulators::attributeTokenProvider('array')($request);
+            TokenManipulators::attributeExtractor('array')($request);
         }, TypeError::class);
     }
 }
