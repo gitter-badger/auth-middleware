@@ -71,6 +71,8 @@ final class TokenManipulators
 
     /**
      * Create an extractor that extracts tokens from a request attribute of choice.
+     * This extractor is trivial, it does not trim or parse the value.
+     * Since the attributes are not user input, it simply assumes the correct raw token format.
      *
      * @param string $attributeName
      * @return callable

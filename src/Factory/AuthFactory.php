@@ -25,22 +25,16 @@ use Psr\Log\LoggerInterface as Logger;
  */
 class AuthFactory
 {
-    protected ?string $secret;
+    /** @var callable|null fn(string):callable */
+    protected $decoderFactory;
     protected ?ResponseFactory $responseFactory;
-    /** @var callable fn(string):callable */
-    protected $decoderProvider;
 
     public function __construct(
-        //
-        // TODO make this not work with "secret", but with the decoder factory only instead
-        //
-        ?string $secret,
-        ?ResponseFactory $responseFactory,
-        ?callable $defaultDecoderProvider = null
+        ?callable $decoderFactory,
+        ?ResponseFactory $responseFactory
     ) {
-        $this->secret = $secret;
+        $this->decoderFactory = $decoderFactory;
         $this->responseFactory = $responseFactory;
-        $this->decoderProvider = $defaultDecoderProvider;
     }
 
     /**
@@ -64,11 +58,11 @@ class AuthFactory
         ?string $errorAttribute = null,
         ?Logger $logger = null
     ): MiddlewareInterface {
-        if ($this->secret === null) {
-            throw new LogicException('Secret not provided.');
+        if ($this->decoderFactory === null) {
+            throw new LogicException('Decoder factory not provided.');
         }
         return new TokenMiddleware(
-            ($this->decoderProvider ?? static::defaultDecoderProvider())($this->secret),
+            ($this->decoderFactory)(),
             (function () use ($headerName, $cookieName): Generator {
                 $headerName !== null && yield Man::headerExtractor($headerName);
                 $cookieName !== null && yield Man::cookieExtractor($cookieName);
@@ -166,16 +160,21 @@ class AuthFactory
         });
     }
 
-    protected static function defaultDecoderProvider(): callable
+    /**
+     * Creates a default decoder factory.
+     * The factory can be used for the constructor.
+     *
+     * @param string $secret secret key for JWT decoder
+     * @return callable fn():FirebaseJwtDecoder
+     */
+    public static function defaultDecoderFactory(string $secret): callable
     {
-        return function (string $secret) {
-            if (!class_exists(JWT::class)) {
-                throw new LogicException(
-                    'Firebase JWT is not installed. ' .
-                    'Require require firebase/php-jwt package (`composer require firebase/php-jwt:"^5.0"`).'
-                );
-            }
-            return new FirebaseJwtDecoder($secret);
-        };
+        if (!class_exists(JWT::class)) {
+            throw new LogicException(
+                'Firebase JWT is not installed. ' .
+                'Require require firebase/php-jwt package (`composer require firebase/php-jwt:"^5.0"`).'
+            );
+        }
+        return fn(): FirebaseJwtDecoder => new FirebaseJwtDecoder($secret);
     }
 }

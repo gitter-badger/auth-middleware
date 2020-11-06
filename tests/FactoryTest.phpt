@@ -8,7 +8,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 use Dakujem\Middleware\Factory\AuthFactory;
 use Dakujem\Middleware\Factory\AuthWizard;
-use Dakujem\Middleware\PredicateMiddleware;
+use Dakujem\Middleware\GenericMiddleware;
 use Dakujem\Middleware\TokenMiddleware;
 use Slim\Psr7\Factory\ResponseFactory;
 use Tester\Assert;
@@ -26,10 +26,10 @@ class _FactoryTest extends TestCase
 {
     public function testAuthFactoryReturnsCorrectMiddleware()
     {
-        $f = new AuthFactory('whatever', new ResponseFactory());
+        $f = new AuthFactory(AuthFactory::defaultDecoderFactory('whatever'), new ResponseFactory());
         Assert::type(TokenMiddleware::class, $f->decodeTokens());
-        Assert::type(PredicateMiddleware::class, $f->assertTokens());
-        Assert::type(PredicateMiddleware::class, $f->probeTokens(fn() => null));
+        Assert::type(GenericMiddleware::class, $f->assertTokens());
+        Assert::type(GenericMiddleware::class, $f->inspectTokens(fn() => null));
     }
 
     public function testAuthWizardReturnsCorrectMiddleware()
@@ -37,8 +37,8 @@ class _FactoryTest extends TestCase
         Assert::type(AuthFactory::class, AuthWizard::factory(null, null));
         $rf = new ResponseFactory();
         Assert::type(TokenMiddleware::class, AuthWizard::decodeTokens('whatever'));
-        Assert::type(PredicateMiddleware::class, AuthWizard::assertTokens($rf));
-        Assert::type(PredicateMiddleware::class, AuthWizard::probeTokens($rf, fn() => null));
+        Assert::type(GenericMiddleware::class, AuthWizard::assertTokens($rf));
+        Assert::type(GenericMiddleware::class, AuthWizard::inspectTokens($rf, fn() => null));
     }
 }
 

@@ -23,12 +23,14 @@ final class AuthWizard
      *
      * @param string|null $secret
      * @param ResponseFactory|null $responseFactory
-     * @param mixed ...$args
      * @return AuthFactory
      */
-    public static function factory(?string $secret, ?ResponseFactory $responseFactory, ...$args): AuthFactory
+    public static function factory(?string $secret, ?ResponseFactory $responseFactory): AuthFactory
     {
-        return new AuthFactory($secret, $responseFactory, ...$args);
+        return new AuthFactory(
+            $secret !== null ? AuthFactory::defaultDecoderFactory($secret) : null,
+            $responseFactory
+        );
     }
 
     /**
@@ -79,14 +81,14 @@ final class AuthWizard
      * @see AuthFactory::inspectTokens()
      *
      * @param ResponseFactory $responseFactory
-     * @param callable $inspector // fn(Token,callable,callable):Response
+     * @param callable $inspector fn(Token,callable,callable):Response
      * @param string|null $tokenAttribute
      * @param string|null $errorAttribute
      * @return PredicateMiddleware
      */
-    public static function probeTokens(
+    public static function inspectTokens(
         ResponseFactory $responseFactory,
-        callable $inspector, // fn(Token):bool
+        callable $inspector,
         ?string $tokenAttribute = null,
         ?string $errorAttribute = null
     ): MiddlewareInterface {

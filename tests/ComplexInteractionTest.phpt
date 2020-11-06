@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpComposerExtensionStubsInspection */
 
 declare(strict_types=1);
 
@@ -18,6 +19,7 @@ use Slim\Psr7\Factory\RequestFactory;
 use Slim\Psr7\Factory\ResponseFactory;
 use Tester\Assert;
 use Tester\TestCase;
+
 
 /**
  * Complex test suite for the middleware interaction.
@@ -156,11 +158,10 @@ class _ComplexInteractionTest extends TestCase
         self::check($mw(), $request, $requestCheck, $responseCheck);
     }
 
-    /** @noinspection PhpComposerExtensionStubsInspection */
     public function testWithErrorPass()
     {
         $mw = fn() => [
-            AuthWizard::assertTokens(new ResponseFactory(), 'token', TokenManipulators::errorMessagePassJson('token.error')),
+            AuthWizard::assertTokens(new ResponseFactory(), 'token', 'token.error'),
             AuthWizard::decodeTokens($this->key, 'token', 'Authorization', 'token', 'token.error'),
         ];
 
@@ -179,7 +180,7 @@ class _ComplexInteractionTest extends TestCase
         $request = $this->req(); // no token
         self::check($mw(), $request, $requestCheck, function (Response $response) {
             Assert::same(401, $response->getStatusCode());
-            Assert::same(json_encode(['error' => ['message' => 'No token found.']]), $response->getBody()->getContents());
+            Assert::same(json_encode(['error' => ['message' => 'No valid token found.']]), $response->getBody()->getContents());
         });
         $request = $this->req()->withHeader('Authorization', 'Bearer malformed.token'); // invalid token
         self::check($mw(), $request, $requestCheck, function (Response $response) {
@@ -188,48 +189,87 @@ class _ComplexInteractionTest extends TestCase
         });
     }
 
-    public function testWithProbe()
+    public function testRejectByInspector()
     {
         $mw = fn() => [
-            AuthWizard::probeTokens(
+            AuthWizard::inspectTokens(
                 new ResponseFactory(),
-                function (?object $token, Request $request): bool {
+                function (object $token, callable $next, callable $withError): Response {
                     Assert::notNull($token);
                     Assert::same(42, $token->sub);
-                    return false; // reject the token
+                    return $withError('I don\'t like the color of your token!'); // reject the token
                 },
                 'my-token',
-                TokenManipulators::errorMessagePassJson('my-token-error')
+                'my-token-error'
             ),
             AuthWizard::decodeTokens($this->key, 'my-token', 'Here-Is-My-Token', null, 'my-token-error'),
         ];
 
-        // the token is indeed valid, but will be rejected by the probe
+        // the token is indeed valid, but will be rejected by the inspector
         $request = $this->req()->withHeader('here-is-my-token', 'Bearer ' . $this->validToken());
-//        self::check($mw(), $request, function (Request $request) {
-//            Assert::notNull($request->getAttribute('token'));
-//        }, function (Response $response) {
-//            Assert::same(200, $response->getStatusCode());
-//        });
-//
-//        // no or invalid token present
-//        $requestCheck = function () {
-//            throw new LogicException('The following middleware should never be reached.');
-//        };
-//        $request = $this->req(); // no token
-//        self::check($mw(), $request, $requestCheck, function (Response $response) {
-//            Assert::same(401, $response->getStatusCode());
-//            Assert::same(json_encode(['error' => ['message' => 'No token found.']]), $response->getBody()->getContents());
-//        });
-//        $request = $this->req()->withHeader('Authorization', 'Bearer malformed.token'); // invalid token
-//        self::check($mw(), $request, $requestCheck, function (Response $response) {
-//            Assert::same(401, $response->getStatusCode());
-//            Assert::same(json_encode(['error' => ['message' => 'Token error: Wrong number of segments']]), $response->getBody()->getContents());
-//        });
+        self::check($mw(), $request, function (Request $request) {
+            throw new LogicException('The following middleware should never be reached.');
+        }, function (Response $response) {
+            Assert::same(401, $response->getStatusCode());
+            Assert::same(json_encode(['error' => ['message' => 'I don\'t like the color of your token!']]), $response->getBody()->getContents());
+        });
     }
 
-    public function testMultipleWithCustomDecoders()
+    public function testAcceptByInspector()
     {
+        $mw = fn() => [
+            AuthWizard::inspectTokens(
+                new ResponseFactory(),
+                function (object $token, callable $next, callable $withError): Response {
+                    Assert::notNull($token);
+                    if ($token->sub === 42) {
+                        return $next();
+                    }
+                    return $withError('This should not happen!');
+                },
+                'my-token',
+                'my-token-error'
+            ),
+            AuthWizard::decodeTokens($this->key, 'my-token', 'Here-Is-My-Token', null, 'my-token-error'),
+        ];
+
+        // the token is indeed valid, but will be rejected by the inspector
+        $request = $this->req()->withHeader('here-is-my-token', 'Bearer ' . $this->validToken());
+        $check = false;
+        self::check($mw(), $request, function (Request $request) use (&$check) {
+            $check = true;
+        }, function (Response $response) {
+            Assert::same(200, $response->getStatusCode());
+            Assert::same('', $response->getBody()->getContents());
+        });
+        Assert::true($check, 'The kernel middleware must be reached.');
+    }
+
+    public function testMultipleDecodingMiddleware()
+    {
+        $mw = fn() => [
+            AuthWizard::decodeTokens($this->key, 'my-token', 'Here-Is-My-Token', null, 'my-token-error'),
+            AuthWizard::decodeTokens($this->key, 'foobar', 'Foobar', 'foobar', 'foobar.error'),
+            AuthWizard::decodeTokens($this->key),
+        ];
+
+        $request = $this->req()
+            ->withHeader('Authorization', 'Bearer ' . $this->validToken())
+            ->withHeader('here-is-my-token', 'Bearer ' . $this->validToken());
+        $check = false;
+        self::check($mw(), $request, function (Request $request) use (&$check) {
+            $check = true;
+            Assert::notNull($request->getAttribute('token'));
+            Assert::notNull($request->getAttribute('my-token'));
+            Assert::null($request->getAttribute('foobar'));
+            Assert::same(42, $request->getAttribute('token')->sub);
+            Assert::same(42, $request->getAttribute('my-token')->sub);
+            Assert::true($request->getAttribute('token') !== $request->getAttribute('my-token'), 'The tokens must be two separate instances!');
+        }, function (Response $response) {
+            Assert::same(200, $response->getStatusCode());
+            Assert::same('', $response->getBody()->getContents());
+        });
+        Assert::true($check, 'The kernel middleware must be reached.');
     }
 }
 
