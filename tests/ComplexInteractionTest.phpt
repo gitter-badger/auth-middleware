@@ -215,6 +215,32 @@ class _ComplexInteractionTest extends TestCase
         });
     }
 
+    public function testRejectWithData()
+    {
+        $errorData = [
+            'message' => 'Sorry, the server turned into a teapot!',
+            'reason' => 'Well, the reason is unknown...',
+        ];
+        $mw = fn() => [
+            AuthWizard::inspectTokens(
+                new ResponseFactory(),
+                function (object $token, callable $next, callable $withError) use ($errorData): Response {
+                    return $withError($errorData)->withStatus(418); // reject the token
+                }
+            ),
+            AuthWizard::decodeTokens($this->key),
+        ];
+
+        // the token is indeed valid, but will be rejected by the inspector
+        $request = $this->req()->withHeader('Authorization', 'Bearer ' . $this->validToken());
+        self::check($mw(), $request, function (Request $request) {
+            throw new LogicException('The kernel should never be reached.');
+        }, function (Response $response) use ($errorData) {
+            Assert::same(418, $response->getStatusCode());
+            Assert::same(json_encode(['error' => $errorData]), $response->getBody()->getContents());
+        });
+    }
+
     public function testAcceptByInspector()
     {
         $mw = fn() => [

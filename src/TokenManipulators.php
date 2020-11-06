@@ -128,48 +128,6 @@ final class TokenManipulators
     }
 
     /**
-     * Create a basic error responder that returns a response with 400 (Bad Request) status.
-     *
-     * @param ResponseFactory $responseFactory
-     * @param int|null $httpStatus HTTP response status, default is 400
-     * @return callable
-     */
-    public static function basicErrorResponder(
-        ResponseFactory $responseFactory,
-        ?int $httpStatus = null
-    ): callable {
-        return function (/* Request $request */) use ($responseFactory, $httpStatus): Response {
-            return $responseFactory->createResponse($httpStatus ?? 400);
-        };
-    }
-
-    /**
-     * Create a function that reads a message from a Request attribute of choice
-     * and writes it as JSON to the Response body, setting correct content-type header.
-     *
-     * It can be used to transfer an error message from the Request to the Response for end user convenience.
-     * Warning: Opinionated and inflexible. You will probably want to use your own implementation.
-     *
-     * @param string $errorAttributeName
-     * @return callable fn(Request,Response):Response
-     */
-    public static function errorMessagePassJson(string $errorAttributeName = self::ERROR_ATTRIBUTE_NAME): callable
-    {
-        return function (Request $request, Response $response) use ($errorAttributeName): Response {
-            // When this error handler is called and no error message is found, it assumes that no token was found.
-            $msg = $request->getAttribute($errorAttributeName) ?? 'No token found.';
-            $stream = $response->getBody();
-            /** @noinspection PhpComposerExtensionStubsInspection */
-            $stream !== null && $stream->write(json_encode([
-                'error' => [
-                    'message' => $msg,
-                ],
-            ]));
-            return $response->withHeader('Content-type', 'application/json');
-        };
-    }
-
-    /**
      * Write error message or error data as JSON to the Response.
      * Also sets the Content-type header for JSON.
      *

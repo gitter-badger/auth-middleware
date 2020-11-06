@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware\Factory;
 
-use Dakujem\Middleware\PredicateMiddleware;
+use Dakujem\Middleware\GenericMiddleware;
 use Dakujem\Middleware\TokenManipulators as Man;
 use Dakujem\Middleware\TokenMiddleware;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
@@ -67,7 +67,7 @@ final class AuthWizard
      * @param ResponseFactory $responseFactory
      * @param string|null $tokenAttribute
      * @param string|null $errorAttribute
-     * @return PredicateMiddleware
+     * @return GenericMiddleware
      */
     public static function assertTokens(
         ResponseFactory $responseFactory,
@@ -84,7 +84,7 @@ final class AuthWizard
      * @param callable $inspector fn(Token,callable,callable):Response
      * @param string|null $tokenAttribute
      * @param string|null $errorAttribute
-     * @return PredicateMiddleware
+     * @return GenericMiddleware
      */
     public static function inspectTokens(
         ResponseFactory $responseFactory,

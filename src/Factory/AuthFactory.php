@@ -144,7 +144,7 @@ class AuthFactory
             $response = fn() => $this->responseFactory->createResponse(401); // HTTP status 401 (Unauthorized)
             $withError = fn($error = null) => $error !== null ? Man::writeJsonError($response(), $error) : $response();
             $token = $request->getAttribute($tokenAttribute ?? Man::TOKEN_ATTRIBUTE_NAME);
-            if ($token !== null) {
+            if (is_object($token)) { // asserts that the token is an object
                 return $inspector(
                     $token,
                     fn() => $next->handle($request),
