@@ -10,6 +10,7 @@ use Psr\Http\Server\RequestHandlerInterface as Handler;
 
 /**
  * Generic PSR-15 request handler.
+ * Turns any callable with signature `fn(Request):Response` into a PSR `RequestHandlerInterface` implementation.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */

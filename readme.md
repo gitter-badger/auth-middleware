@@ -9,12 +9,11 @@ Modern and highly flexible PSR-15 authentication and authorization middleware.
 > 💿 `composer require dakujem/auth-middleware`
 
 
-The package consists of two decoupled middleware implementations:
-- `TokenMiddleware` for token decoding
-- `PredicateMiddleware` for token assertion (auth)
-
-
 ## Default Usage
+
+The package makes use of _two_ decoupled middleware implementations:
+- `TokenMiddleware` for (JWT) token decoding
+- `GenericMiddleware` for token assertion (authentication & authorization)
 
 Use `AuthWizard` for convenience:
 ```php
@@ -22,7 +21,6 @@ Use `AuthWizard` for convenience:
 $app->add(AuthWizard::assertTokens($app->getResponseFactory()));
 $app->add(AuthWizard::decodeTokens('a-secret-api-key-never-to-commit'));
 ```
-For highly flexible options to instantiate the middleware, read the next chapter.
 
 The pair of middleware (MW) will look for a [JWT](https://jwt.io/introduction/)
 in the `Authorization` header or `token` cookie.\
@@ -44,17 +42,19 @@ $app->add($mwFactory->decodeTokens());                     // decode the token f
 $app->group('/foo', ...)->add($mwFactory->assertTokens()); // only apply the assertion for selected ones
 ```
 
-Custom token assertion can be applied too:
+Custom token inspection can be applied too:
 ```php
-$app->group('/admin', ...)->add(AuthWizard::probeTokens(
+$app->group('/admin', ...)->add(AuthWizard::inspectTokens(
     $app->getResponseFactory(),
-    fn(MyToken $token): bool => $token->grantsAdminAccess()
+    function(MyToken $token, $next, $withError): Response {
+        return $token->grantsAdminAccess() ? $next() : $withError('Admin privilege required!');
+    }
 ));
 ```
-
 > To cast the token to a specific class as seen above,
-> custom _decoder_ must be used for `TokenMiddleware`, see the next chapter.
+> custom _decoder_ must be used for `TokenMiddleware`, see the next chapters.
 
+For highly flexible options to instantiate the middleware, read the "Compose Your Own Middleware" chapter below.
 
 For the defaults to work (the decoder in particular),
 you need to install [Firebase JWT](https://github.com/firebase/php-jwt) package.\
@@ -63,7 +63,7 @@ you need to install [Firebase JWT](https://github.com/firebase/php-jwt) package.
 >
 > 💡
 >
-> You are able to use any other decoder implementation, see below.
+> You are able to use any other decoder implementation and need not install Firebase JWT package, see below.
 >
 > The MW can also be used for OAuth tokens or other tokens,
 > simply by swapping the default decoder for another one.
@@ -73,20 +73,97 @@ you need to install [Firebase JWT](https://github.com/firebase/php-jwt) package.
 >
 
 
+## Extracting & Decoding JWT
+
+```php
+AuthWizard::decodeTokens(
+    'a-secret-api-key-never-to-commit',
+    'token',          // what attribute to put the decoded token to
+    'Authorization',  // what header to look for the Bearer token in
+    'token',          // what cookie to look for the raw token in
+    'token.error'     // what attribute to write error messages to
+);
+```
+The above creates an instance of `TokenMiddleware` that uses the default JWT decoder
+and injects the decoded token to the `token` Request attribute accessible further in the app stack.
+
+If the decoded token appears in the attribute, it is:
+- present (obviously)
+- authentic (has been created using the key)
+- valid (not expired)
+
+
+## Authorization
+
+The middleware above will only decode the token, if present, authentic and valid,
+but will NOT terminate the pipeline in any case❗
+
+The authorization must be done by a separate middleware:
+```php
+AuthWizard::assertTokens(
+    $responseFactory, // PSR-17 Request factory
+    'token',          // what attribute to look for the decoded token in
+    'token.error'     // what attribute to look for error messages in
+);
+```
+The above creates a middleware that will assert that the `token` attribute of the Request contains a decoded token.\
+Otherwise, the pipeline will be terminated and 401 (Unauthorized) Response returned.
+An error message will be encoded as JSON into the response.
+
+As you can see, the pair of middleware acts as a couple, but is decoupled for flexibility.
+
+The middleware created by `AuthWizard::assertTokens` asserts the _presence_ of the decoded token only.\
+It is possible to create custom inspections, of course:
+```php
+$inspector = function (object $token, callable $next, callable $withError): Response {
+    if ($token->sub === 42) {        // Implement your inspection logic here.
+        return $next();              // Invoke the next middleware for valid tokens
+    }                                // or
+    return $withError('Bad token.'); // return an error response for invalid ones.
+};
+AuthWizard::inspectTokens(
+    $responseFactory, // PSR-17 Request factory
+    $inspector,
+    'token',          // what attribute to look for the decoded token in
+    'token.error'     // what attribute to look for error messages in
+);
+```
+In this case, the pipeline can be terminated on other conditions as well.
+Custom error messages or data can be passed to the Response.\
+If the token is not present, the middleware acts the same as the one created by `assertTokens`
+and the inspector is not called.
+
+You are of course able to cast the token to a custom class,
+with methods like `MyToken::grantsAdminAccess` to tell if the token authorizes the user for admin access.
+```php
+AuthWizard::inspectTokens(
+    $responseFactory,
+    function(MyToken $token, $next, $withError): Response {
+        return $token->grantsAdminAccess() ? $next() : $withError('Admin privilege required!');
+    }
+);
+```
+
+
 ## Compose Your Own Middleware
 
-In the examples above, we are using the [`AuthWizard`] convenience helper which provides sensible defaults.\
-However, it is possible and encouraged to build your own middleware using the components provided by the package.
+In the examples above, we are using the [`AuthWizard`] helper which provides sensible defaults.\
+However, it is possible and encouraged to build your own middleware using the components provided by this package.
+
+You have the flexibility to fine-tune the middleware for any use case.
 
 >
 > Note that I'm using aliased class names instead of full interface names in this documentation for brevity.
 >
 > Here are the full interface names:
-> - `Request` --> `Psr\Http\Message\ServerRequestInterface`\
-> - `Response` --> `Psr\Http\Message\ResponseInterface`\
-> - `ResponseFactory` --> `Psr\Http\Message\ResponseFactoryInterface`\
-> - `Handler` --> `Psr\Http\Server\RequestHandlerInterface`\
-> - `Logger` --> `Psr\Log\LoggerInterface`
+>
+> | Alias | Full class name |
+> |:------|:----------------|
+> | `Request` | `Psr\Http\Message\ServerRequestInterface` |
+> | `Response` | `Psr\Http\Message\ResponseInterface` |
+> | `ResponseFactory` | `Psr\Http\Message\ResponseFactoryInterface` |
+> | `Handler` | `Psr\Http\Server\RequestHandlerInterface` |
+> | `Logger` | `Psr\Log\LoggerInterface` |
 >
 
 
@@ -131,35 +208,32 @@ The decoder should be swapped if you want to use OAuth tokens or a different JWT
 Exceptions may be caught and processed by the injector.
 
 
-### `PredicateMiddleware`
+### `GenericMiddleware`
 
-The [`PredicateMiddleware`] is a general purpose middleware that is only responsible for evaluation of a predicate and
-termination of the pipeline execution in case the predicate fails.\
-A pipeline is terminated by calling an error Handler instead of the next pipeline Handler.\
-We may use it to assert that a token is indeed available in the Request.
+The [`GenericMiddleware`] is a general purpose middleware that turns a callable into PSR-15 implementation.
+It accepts _any_ callable with signature `fn(Request,Handler):Response`.
 
-The [`PredicateMiddleware`] is composed of
-- a _predicate_
-    - a _predicate_ is a callable that returns truthy if the predicate passes and falsy if not
-    - `fn(Request):bool`
-- an _error handler_
-    - a PSR `Handler` implementation instance
+It is used for assertion of token presence and custom authorization by `AuthWizard` / `AuthFactory`.
 
-Again, these components can be replaced, extended or customized.
-
-Here are the defaults provided by `AuthWizard::assertTokens`:
+It can be used for convenient inline middleware implementation:
 ```php
-new PredicateMiddleware(
-    // look for the decoded token in the `token` attribute
-    TokenManipulators::attributeTokenProvider('token'),
-    // respond with 401 on error by default
-    TokenManipulators::callableToHandler(
-        TokenManipulators::basicErrorResponder(/* ResponseFactory */ $responseFactory, 401)
-    )
-);
+$app->add(new GenericMiddleware(function(Request $request, Handler $next): Response {
+    $request = $request->withAttribute('foo', 42);
+    $response = $next->handle($request);
+    return $response->withHeader('foo', 'bar');
+}));
 ```
 
-You now have the flexibility to fine-tune the pair of MW for any use case.
+
+### `AuthWizard`, `AuthFactory`
+
+[`AuthWizard`] is a friction reducer that helps quickly instantiate the middleware with sensible defaults.\
+[`AuthFactory`] is a configurable factory with sensible defaults provided for convenience.\
+`AuthWizard` internally instantiates `AuthFactory` and acts as a static proxy for the factory.
+
+Use `AuthFactory::decodeTokens` to create token-decoding middleware.\
+Use `AuthFactory::assertTokens` to create middleware that asserts the presence of a decoded token.\
+Use `AuthFactory::inspectTokens` to create middleware with custom authorization rules against the token.
 
 
 ### `TokenManipulators`
@@ -175,20 +249,17 @@ The [`FirebaseJwtDecoder`] class serves as the default implementation for JWT to
 It is used as a _decoder_ for the `TokenMiddleware`.
 
 
-### `AuthWizard`, `AuthFactory`
+### Logger
 
-[`AuthWizard`] is a friction reducer that helps quickly instantiate the middleware with sensible defaults.\
-[`AuthFactory`] is a configurable factory provided for convenience. `AuthWizard` internally instantiates it.
+The `TokenMiddleware` accepts a PSR-3 `Logger` instance for debug purposes.
 
-Use `AuthFactory::decodeTokens` to create token-decoding middleware.\
-Use `AuthFactory::assertTokens` to assert that a decoded token is present.\
-Use `AuthFactory::probeTokens` to run custom authorization against the token.
 
-```php
-AuthWizard::factory(null, $responseFactory)->probeTokens(function(/*MyToken*/ $token): bool {
-    return $token->sub === 'admin';
-});
-```
+### Tips
+
+Multiple token-decoding and token-inspecting middleware can be stacked too!
+
+Token decoding will usually be applied to the app-level middleware (every route),
+but the assertions can be _composed_ and applied to groups or individual routes as needed.
 
 
 ## Testing

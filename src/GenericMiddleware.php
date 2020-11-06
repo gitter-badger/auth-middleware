@@ -11,6 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface as Handler;
 
 /**
  * Generic PSR-15 middleware.
+ * Turns any callable with signature `fn(Request,Handler):Response` into a PSR `MiddlewareInterface` implementation.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
