@@ -10,6 +10,7 @@ use Dakujem\Middleware\Factory\AuthFactory;
 use Dakujem\Middleware\Factory\AuthWizard;
 use Dakujem\Middleware\GenericMiddleware;
 use Dakujem\Middleware\TokenMiddleware;
+use LogicException;
 use Slim\Psr7\Factory\ResponseFactory;
 use Tester\Assert;
 use Tester\TestCase;
@@ -39,6 +40,19 @@ class _FactoryTest extends TestCase
         Assert::type(TokenMiddleware::class, AuthWizard::decodeTokens('whatever'));
         Assert::type(GenericMiddleware::class, AuthWizard::assertTokens($rf));
         Assert::type(GenericMiddleware::class, AuthWizard::inspectTokens($rf, fn() => null));
+    }
+
+    public function testThrows()
+    {
+        // no secret key for decoding
+        Assert::throws(fn() => AuthWizard::factory(null, new ResponseFactory())
+            ->decodeTokens(), LogicException::class);
+
+        // no response factory for 401 responses
+        Assert::throws(fn() => AuthWizard::factory('a secret key what', null)
+            ->assertTokens(), LogicException::class);
+        Assert::throws(fn() => AuthWizard::factory('a secret key what', null)
+            ->inspectTokens(fn() => null), LogicException::class);
     }
 }
 

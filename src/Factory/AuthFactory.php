@@ -172,7 +172,7 @@ class AuthFactory
         if (!class_exists(JWT::class)) {
             throw new LogicException(
                 'Firebase JWT is not installed. ' .
-                'Require require firebase/php-jwt package (`composer require firebase/php-jwt:"^5.0"`).'
+                'Requires firebase/php-jwt package (`composer require firebase/php-jwt:"^5.0"`).'
             );
         }
         return fn(): FirebaseJwtDecoder => new FirebaseJwtDecoder($secret);
