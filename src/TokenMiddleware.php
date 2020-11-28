@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware;
 
-use Generator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
@@ -27,8 +26,9 @@ use Psr\Log\LogLevel;
  * and an injector to write the token (or error message) to a request attribute.
  *
  * Caveat ⚠:
- *   When using a Generator as the set of extractors,
- *   each instance of this middleware can only reliably process one Request.
+ *   When using a Generator for the set of extractors,
+ *   each instance of this middleware can only reliably process one Request,
+ *   because a generator can not be restarted/rewound.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
@@ -49,11 +49,10 @@ final class TokenMiddleware implements MiddlewareInterface
         ?LoggerInterface $logger = null
     ) {
         $this->decoder = $decoder;
-        // ⚠ Maybe scrap the idea of a Generator as default iterable for extractors?
-        $this->extractors = $extractors ?? (function (): Generator {
-                yield TokenManipulators::headerExtractor();
-                yield TokenManipulators::cookieExtractor();
-            })();
+        $this->extractors = $extractors ?? [
+                TokenManipulators::headerExtractor(),
+                TokenManipulators::cookieExtractor(),
+            ];
         $this->injector = $injector ?? TokenManipulators::attributeInjector();
         $this->logger = $logger;
     }

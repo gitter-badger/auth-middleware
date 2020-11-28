@@ -117,7 +117,7 @@ class _TokenMwTest extends TestCase
         Assert::with($mw, function () use ($decoder) {
             // test private methods
             Assert::same($decoder, $this->decoder);
-            Assert::count(2, iterator_to_array($this->extractors));
+            Assert::count(2, $this->extractors);
             Assert::notNull($this->injector);
             Assert::null($this->logger);
         });

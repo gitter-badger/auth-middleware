@@ -9,7 +9,6 @@ use Dakujem\Middleware\GenericMiddleware;
 use Dakujem\Middleware\TokenManipulators as Man;
 use Dakujem\Middleware\TokenMiddleware;
 use Firebase\JWT\JWT;
-use Generator;
 use LogicException;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -61,12 +60,19 @@ class AuthFactory
         if ($this->decoderFactory === null) {
             throw new LogicException('Decoder factory not provided.');
         }
+        $extractors = [];
+        if ($headerName !== null) {
+            $extractors[] = Man::headerExtractor($headerName);
+        }
+        if ($cookieName !== null) {
+            $extractors[] = Man::cookieExtractor($cookieName);
+        }
+        if ($extractors === []) {
+            throw new LogicException('No extractors. Using the token middleware without extractors is pointless.');
+        }
         return new TokenMiddleware(
             ($this->decoderFactory)(),
-            (function () use ($headerName, $cookieName): Generator {
-                $headerName !== null && yield Man::headerExtractor($headerName);
-                $cookieName !== null && yield Man::cookieExtractor($cookieName);
-            })(),
+            $extractors,
             Man::attributeInjector(
                 $tokenAttribute ?? Man::TOKEN_ATTRIBUTE_NAME,
                 $errorAttribute ?? (($tokenAttribute ?? Man::TOKEN_ATTRIBUTE_NAME) . Man::ERROR_ATTRIBUTE_SUFFIX)

@@ -42,17 +42,39 @@ class _FactoryTest extends TestCase
         Assert::type(GenericMiddleware::class, AuthWizard::inspectTokens($rf, fn() => null));
     }
 
-    public function testThrows()
+    public function testThrowsOnNoSecret()
     {
         // no secret key for decoding
-        Assert::throws(fn() => AuthWizard::factory(null, new ResponseFactory())
-            ->decodeTokens(), LogicException::class);
+        Assert::throws(
+            fn() => AuthWizard::factory(null, new ResponseFactory())->decodeTokens(),
+            LogicException::class,
+            'Decoder factory not provided.'
+        );
+    }
 
+    public function testThrowsOnNoResponseFactory()
+    {
         // no response factory for 401 responses
-        Assert::throws(fn() => AuthWizard::factory('a secret key what', null)
-            ->assertTokens(), LogicException::class);
-        Assert::throws(fn() => AuthWizard::factory('a secret key what', null)
-            ->inspectTokens(fn() => null), LogicException::class);
+        Assert::throws(
+            fn() => AuthWizard::factory('a secret key what', null)->assertTokens(),
+            LogicException::class,
+            'Response factory not provided.'
+        );
+        Assert::throws(
+            fn() => AuthWizard::factory('a secret key what', null)->inspectTokens(fn() => null),
+            LogicException::class,
+            'Response factory not provided.'
+        );
+    }
+
+    public function testThrowsOnNoExtractors()
+    {
+        // no secret key for decoding
+        Assert::throws(
+            fn() => AuthWizard::factory('a secret key what', new ResponseFactory())->decodeTokens(null, null, null),
+            LogicException::class,
+            'No extractors. Using the token middleware without extractors is pointless.'
+        );
     }
 }
 
