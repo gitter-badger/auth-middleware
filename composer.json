@@ -11,9 +11,10 @@
   ],
   "require": {
     "php": "^7.4 || ^8.0",
+    "dakujem/generic-middleware": "^1",
+    "psr/http-factory": "^1.0",
     "psr/http-server-middleware": "^1.0",
-    "psr/log": "^1.0",
-    "psr/http-factory": "^1.0"
+    "psr/log": "^1.0"
   },
   "require-dev": {
     "ext-json": "*",
@@ -38,9 +39,7 @@
     "test:local": "Run application tests with local configuration.",
     "test:ci": "Run application tests, provide configuration options as needed."
   },
-  "extra": {
-    "branch-alias": {
-      "dev-main": "1.x-dev"
-    }
+  "config": {
+    "sort-packages": true
   }
 }

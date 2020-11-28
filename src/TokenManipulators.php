@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Middleware;
 
-use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface as Middleware;
