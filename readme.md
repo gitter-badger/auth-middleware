@@ -4,6 +4,7 @@
 ![PHP 8 ready](https://img.shields.io/static/v1?label=php%208&message=ready%20%F0%9F%91%8D&color=green)
 [![Build Status](https://travis-ci.org/dakujem/auth-middleware.svg?branch=main)](https://travis-ci.org/dakujem/auth-middleware)
 [![Coverage Status](https://coveralls.io/repos/github/dakujem/auth-middleware/badge.svg?branch=main)](https://coveralls.io/github/dakujem/auth-middleware?branch=main)
+[![Join the chat at https://gitter.im/dakujem/auth-middleware](https://badges.gitter.im/dakujem/auth-middleware.svg)](https://gitter.im/dakujem/auth-middleware)
 
 Modern and highly flexible PSR-15 authentication and authorization middleware.
 
